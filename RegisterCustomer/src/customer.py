@@ -2,16 +2,16 @@
 from database import Database
 # Imports ObjectId to convert to the correct format before querying in the db
 from bson.objectid import ObjectId
-
+from random import randint
 
 # customer document contains customer_name (String), email (String), and role (String) fields
 class customer():
     CUSTOMER_COLLECTION = 'customers'
 
-    def __init__(self,logged_customer_id):
+    def __init__(self):
         self._db = Database()
         self._latest_error = ''
-        self.logged_customer_id=logged_customer_id
+        # self.customer_data=customer_data
     
     # Latest error is used to store the error string in case an issue. It's reset at the beginning of a new function call
     @property
@@ -37,36 +37,53 @@ class customer():
     def __find(self, key):
         try:
             try:
-                customer_document = dict(self._db.get_single_data(customer.CUSTOMER_COLLECTION,{'customer_id':self.logged_customer_id}))      
-                customer_id=customer_document['customer_id']           
-                customer_data= dict(self._db.get_single_data(customer.CUSTOMER_COLLECTION,key))
-                return customer_data
+                customer_document = dict(self._db.get_single_data(customer.CUSTOMER_COLLECTION,{'customer_name':key['customer_name']}))
+                return customer_document
             except:
-                self._latest_error = f'{self.logged_customer_id} not found!'  
-                return -1  
+                try:
+                    customer_document = dict(self._db.get_single_data(customer.CUSTOMER_COLLECTION,{'customer_id':key['customer_id']}))
+                    return customer_document
+                except:
+                    try:
+                        customer_document = dict(self._db.get_single_data(customer.CUSTOMER_COLLECTION,{'_id':key['_id']}))
+                        return customer_document
+                    except:
+                        return -1                    
         except Exception as e:
-            customer_id=key['customer_id']
-            self._latest_error = f'{customer_id} not found!'  
-            return -1 
+            print("E:",str(e))
+            return -1  
+ 
         
-    
+    def generate_customer_id(self,cust_name):
+        start = randint(1,10)
+        end = randint(11,20)
+        rand_num = randint(start,end)
+        cust_name = cust_name.replace(" ","")
+        cust_id = f"{cust_name}_{rand_num}"
+        # check if customer id already exists
+        res = self.find_by_customer_id(cust_id)
+        if res == -1:
+            return cust_id
+        # extra step for uniq user id generate
+        else:
+            rand_num = randint(220,320)
+            cust_id = f"{cust_name}_{rand_num}"
+            return cust_id
+        
     # This first checks if a customer already exists with that customer_name. If it does, it populates latest_error and returns -1
     # If a customer doesn't already exist, it'll insert a new document and return the same to the caller
-    def register(self,  customer_id, customer_name,customer_longitude,customer_latitude):
+    def register(self,customer_name,customer_longitude,customer_latitude):
         try:
             self._latest_error = ''               
-            cust_id_document = self.find_by_customer_id(customer_id)
-            if self.logged_customer_id != customer_id:
-                self._latest_error = f'Customer ID Error!'
-                return -1
-
-            if (cust_id_document) != -1 :                
-                self._latest_error = f'Customer ID: {customer_id} already exists for another Customer: {cust_id_document["customer_name"]}!'
-                return -1
+            cust_name_document = self.find_by_customer_name(customer_name)
+            if (cust_name_document) != -1 :          
+                self._latest_error = f'Customer: {customer_name} already exists !'
+                return -1           
             else:
+                customer_id = self.generate_customer_id(customer_name)
                 customer_data = {'customer_id':customer_id,'customer_name': customer_name,'customer_location':f"[{customer_longitude},{customer_latitude}]"}
                 customer_obj_id = self._db.insert_single_data(customer.CUSTOMER_COLLECTION, customer_data)
                 return self.find_by_object_id(customer_obj_id)        
         except Exception as e:
-            print(str(e))
+            print("Error:",str(e))
             return -1

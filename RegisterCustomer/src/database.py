@@ -26,7 +26,7 @@ class Database:
         document = db_collection.insert_one(data)
         return document.inserted_id
     
-
+  
     def get_col_data(self, collection):
         db_collection = self._db[collection]
         col = db_collection.find()
