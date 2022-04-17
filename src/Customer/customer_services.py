@@ -1,3 +1,5 @@
+'''author :mayuri date:4/16/2022'''
+
 
 # Imports ObjectId to convert to the correct format before querying in the db
 from asyncore import read
@@ -35,24 +37,24 @@ class Customer_Services():
             for customer_row in customer_fh:
                 customer_row = customer_row.rstrip()
                 if customer_row:
-                    (customer_first_name, customer_last_name,customer_email,customer_trip_indicator) = customer_row.split(',')
+                    (customer_first_name, customer_last_name,customer_email,trip_indicator) = customer_row.split(',')
                             
-                customer_data = {"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"customer_email":customer_email,"customer_trip_indicator":customer_trip_indicator}
+                customer_data = {"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"customer_email":customer_email,"trip_indicator":trip_indicator}
                 customer_data_list.append(customer_data)
             return customer_data_list
             
     # generate uniques customer id 
-    def generate_customer_id(self,cust_name):
+    def generate_customer_id(self,cust_first,cust_last):
         start = randint(1,10)
         end = randint(11,20)
         rand_num = randint(start,end)
-        cust_name = cust_name.replace(" ","")
-        cust_id = f"{cust_name}_{rand_num}"
+        cust_name = cust_first[:4]+cust_last[:2]
+        cust_id = f"{cust_name}_{rand_num}"        
         return cust_id
 
     # check for area boundary
     def check_location(self,lat,long):
-        if self._max_lat <=  lat <= self._max_long  and  self._max_lat <=  lat <= self._max_long:
+        if self._max_lat <=  lat <= self._max_long  and  self._max_lat <=  long <= self._max_long:
             return 1
         return -1
         
@@ -61,15 +63,16 @@ class Customer_Services():
         try:
             self._latest_error = '' 
             # read customer customer details           
-            cust_res = self.get_customer_details(customer_first_name,customer_last_name)
+            res = self.get_customer_details(customer_first_name,customer_last_name)
+            cust_res = json.loads(res)
             if cust_res == -1:        
                 res = self.check_location(lat,long)                
                 if res == 1:            
-                    customer_id = self.generate_customer_id(customer_first_name)
+                    customer_id = self.generate_customer_id(customer_first_name,customer_last_name)
                     _timestamp=datetime.datetime.now()
-                    customer_data = {"timestamp":str(_timestamp),"customer_id":customer_id,"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"customer_email":customer_email,"customer_location":{"type":"Point","coordinates":[long,lat]},"customer_trip_indicator":"OFF"}        
+                    customer_data = {"timestamp":str(_timestamp),"customer_id":customer_id,"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"customer_email":customer_email,"location":{"type":"Point","coordinates":[long,lat]},"trip_indicator":"OFF"}        
                     self.register_connection([customer_data])
-                    print("Successful Registration!")
+                    print("==================Successful Registration!==================")
                 else:
                     print("Sorry,cab service is not available in this area!")
             else:
@@ -82,16 +85,16 @@ class Customer_Services():
         try:
             customer_data = self.read_data_from_csv()
             for val in customer_data:
-                customer_id = self.generate_customer_id(val['customer_first_name'])
+                customer_id = self.generate_customer_id(val['customer_first_name'],val['customer_last_name'])
                 _timestamp=datetime.datetime.now()
                 long = random.uniform(self._max_lat, self._max_long)
                 lat = random.uniform(self._max_lat, self._max_long)
                 val["timestamp"] = str(_timestamp)
                 val["customer_id"]=customer_id
-                val["customer_location"]={"type":"Point","coordinates":[long,lat]}
+                val["location"]={"type":"Point","coordinates":[long,lat]}
                 self.customer_data_list.append(val)
             self.register_connection(self.customer_data_list)
-            print("Successful Registration!")
+            print("==================Successful Registration!==================")
         except Exception as e:
             print("RegisterManyError:",str(e))        
 
@@ -108,24 +111,24 @@ class Customer_Services():
 
     # API endpoint to read customer details
     def get_customer_details(self,customer_first_name,customer_last_name):
-        cust_data = {"customer_first_name":customer_first_name,"customer_last_name":customer_last_name}
-        # connecting to endpoint to send data
-        response = requests.get(self.get_url,params = cust_data)
-        if response.status_code == 200:
-            print("Connected to Read API Endpoint")
+        try:
+            cust_data = {"customer_first_name":customer_first_name,"customer_last_name":customer_last_name}
+            # connecting to endpoint to send data
+            response = requests.get(self.get_url,params = cust_data)            
             return response.text
-        else:
-            print(f"Check status:{response.text}")
+        except:
             return -1
-        
 
     # raise booking request and return nearest taxi
     def booking(self,customer_first_name,customer_last_name):
-        # read customer customer details           
-        res = self.get_customer_details(customer_first_name,customer_last_name)
-        if res != -1:
-            read_res = json.loads(res)
-            cust_loc= read_res["customer_location"]
+        try:
+            # read customer customer details           
+            res = self.get_customer_details(customer_first_name,customer_last_name)
+        except Exception as e:
+            print(str(e))         
+        read_res = json.loads(res)
+        if read_res != -1:
+            cust_loc= read_res["location"]
             lat = cust_loc["coordinates"][1]
             long = cust_loc["coordinates"][0]
             loc_res = self.check_location(lat,long)
@@ -134,14 +137,18 @@ class Customer_Services():
                 cust_id = read_res["customer_id"]
                 cust_data = {"customer_id": cust_id,"lat":lat,"long":long,"type":"Point"}
                 response = requests.get(self.book_url,params = cust_data)
-                if response.status_code == 200:
+                book_res = json.loads(response.text)
+                if response.status_code == 200 and book_res != -1:
                     print("Connected to Booking API Endpoint")
+                    print("=========Booking Successful !!===========")
                     return response.text
                 else:
                     print(f"Check status:{response.text}")
                     return -1
-
-            
+            else:
+                print("Sorry,cab service is not available in this area!")                
+        else:
+            return 0  
 
                 
 
