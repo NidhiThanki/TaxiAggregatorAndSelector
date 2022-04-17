@@ -18,10 +18,10 @@ cust = Customer_Services()
 
 # register one new customer
 cust1 = Customer_Services()
-cust1.register_one("Sejal","Kumar","moh@gmail.com",13.950290,77.204570)
+cust1.register_one("Sejal","Patel","sej@gmail.com",13.950290,77.204570)
 
 # Randomly booking for customers who are already registered for cab services
-res=cust1.booking("Moha","Kumar")
+res=cust1.booking("Moha","Kumar",30.77,45.66)
 if res == 0:
     print("Customer not registered for services!")
 elif res !=-1:

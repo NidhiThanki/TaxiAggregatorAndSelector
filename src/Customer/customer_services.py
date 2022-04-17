@@ -120,7 +120,7 @@ class Customer_Services():
             return -1
 
     # raise booking request and return nearest taxi
-    def booking(self,customer_first_name,customer_last_name):
+    def booking(self,customer_first_name,customer_last_name,dest_lat,dest_long):
         try:
             # read customer customer details           
             res = self.get_customer_details(customer_first_name,customer_last_name)
@@ -129,15 +129,16 @@ class Customer_Services():
         read_res = json.loads(res)
         if read_res != -1:
             cust_loc= read_res["location"]
-            lat = cust_loc["coordinates"][1]
-            long = cust_loc["coordinates"][0]
-            loc_res = self.check_location(lat,long)
+            cust_lat = cust_loc["coordinates"][1]
+            cust_long = cust_loc["coordinates"][0]
+            loc_res = self.check_location(cust_lat,cust_long)
             if loc_res != -1 :
                 # connecting to endpoint to send data
                 cust_id = read_res["customer_id"]
-                cust_data = {"customer_id": cust_id,"lat":lat,"long":long,"type":"Point"}
+                cust_data = {"customer_id": cust_id,"cust_lat":cust_lat,"cust_long":cust_long,"type":"Point","dest_lat":dest_lat,"dest_long":dest_long}
                 response = requests.get(self.book_url,params = cust_data)
                 book_res = json.loads(response.text)
+
                 if response.status_code == 200 and book_res != -1:
                     print("Connected to Booking API Endpoint")
                     print("=========Booking Successful !!===========")
