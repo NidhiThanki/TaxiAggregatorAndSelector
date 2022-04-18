@@ -19,8 +19,10 @@ class Customer_Services():
         config = CommonUtil.read_properties()
         self._customer_file_path = config.get("CUSTOMER_CSV_FILE").data
         self._collection_name = config.get("CUSTOMER_COLLECTION").data
-        self._max_lat = float(config.get("LAT_VALUE").data)
-        self._max_long = float(config.get("LONG_VALUE").data)
+        self._min_lat = float(config.get("MIN_LAT_VALUE").data)
+        self._min_long = float(config.get("MIN_LONG_VALUE").data)
+        self._max_lat = float(config.get("MAX_LAT_VALUE").data)
+        self._max_long = float(config.get("MAX_LONG_VALUE").data)
         self.post_url = "https://dbco8t3hz3.execute-api.us-east-1.amazonaws.com/register-customer"
         self.get_url = "https://dbco8t3hz3.execute-api.us-east-1.amazonaws.com/read-customer"
         self.book_url = "https://pjfnpvj0ce.execute-api.us-east-1.amazonaws.com/customer-book"
@@ -37,8 +39,7 @@ class Customer_Services():
             for customer_row in customer_fh:
                 customer_row = customer_row.rstrip()
                 if customer_row:
-                    (customer_first_name, customer_last_name,customer_email,trip_indicator) = customer_row.split(',')
-                            
+                    (customer_first_name, customer_last_name,customer_email,trip_indicator) = customer_row.split(',')                            
                 customer_data = {"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"customer_email":customer_email,"trip_indicator":trip_indicator}
                 customer_data_list.append(customer_data)
             return customer_data_list
@@ -54,7 +55,7 @@ class Customer_Services():
 
     # check for area boundary
     def check_location(self,lat,long):
-        if self._max_lat <=  lat <= self._max_long  and  self._max_lat <=  long <= self._max_long:
+        if self._min_lat <=  lat <= self._max_lat  and  self._min_long <=  long <= self._max_long:
             return 1
         return -1
         
@@ -87,8 +88,8 @@ class Customer_Services():
             for val in customer_data:
                 customer_id = self.generate_customer_id(val['customer_first_name'],val['customer_last_name'])
                 _timestamp=datetime.datetime.now()
-                long = random.uniform(self._max_lat, self._max_long)
-                lat = random.uniform(self._max_lat, self._max_long)
+                long = random.uniform(self._min_long, self._max_long)
+                lat = random.uniform(self._min_lat, self._max_lat)
                 val["timestamp"] = str(_timestamp)
                 val["customer_id"]=customer_id
                 val["location"]={"type":"Point","coordinates":[long,lat]}
@@ -112,44 +113,61 @@ class Customer_Services():
     # API endpoint to read customer details
     def get_customer_details(self,customer_first_name,customer_last_name):
         try:
-            cust_data = {"customer_first_name":customer_first_name,"customer_last_name":customer_last_name}
+            # cust_data = {"customer_first_name":customer_first_name,"customer_last_name":customer_last_name}
+            data_req = {"req":"one","customer_first_name":customer_first_name,"customer_last_name":customer_last_name}
             # connecting to endpoint to send data
-            response = requests.get(self.get_url,params = cust_data)            
+            response = requests.get(self.get_url,params = data_req)            
+            return response.text
+        except:
+            return -1
+    
+    # get data for all customer
+    def get_registered_customers(self):
+        try:
+            data_req = {"req":"all"}
+            # connecting to endpoint to send data
+            response = requests.get(self.get_url,params = data_req)            
             return response.text
         except:
             return -1
 
     # raise booking request and return nearest taxi
     def booking(self,customer_first_name,customer_last_name,dest_lat,dest_long):
-        try:
-            # read customer customer details           
-            res = self.get_customer_details(customer_first_name,customer_last_name)
-        except Exception as e:
-            print(str(e))         
-        read_res = json.loads(res)
-        if read_res != -1:
-            cust_loc= read_res["location"]
-            cust_lat = cust_loc["coordinates"][1]
-            cust_long = cust_loc["coordinates"][0]
-            loc_res = self.check_location(cust_lat,cust_long)
-            if loc_res != -1 :
-                # connecting to endpoint to send data
-                cust_id = read_res["customer_id"]
-                cust_data = {"customer_id": cust_id,"cust_lat":cust_lat,"cust_long":cust_long,"type":"Point","dest_lat":dest_lat,"dest_long":dest_long}
-                response = requests.get(self.book_url,params = cust_data)
-                book_res = json.loads(response.text)
+        # check if destination location is in service area boundary
+        dest_res = self.check_location(dest_lat,dest_long)
+        if dest_res != -1:
+            try:
+                # read customer customer details           
+                res = self.get_customer_details(customer_first_name,customer_last_name)
+            except Exception as e:
+                print(str(e))         
+            read_res = json.loads(res)
+            if read_res != -1:
+                cust_loc= read_res["location"]
+                cust_lat = cust_loc["coordinates"][1]
+                cust_long = cust_loc["coordinates"][0]
+                loc_res = self.check_location(cust_lat,cust_long)
+                if loc_res != -1 :
+                    # connecting to endpoint to send data
+                    cust_id = read_res["customer_id"]
+                    _timestamp=datetime.datetime.now()
+                    cust_data = {"timestamp":str(_timestamp),"customer_id": cust_id,"cust_lat":cust_lat,"cust_long":cust_long,"type":"Point","dest_lat":dest_lat,"dest_long":dest_long}
+                    response = requests.get(self.book_url,params = cust_data)
+                    book_res = json.loads(response.text)
 
-                if response.status_code == 200 and book_res != -1:
-                    print("Connected to Booking API Endpoint")
-                    print("=========Booking Successful !!===========")
-                    return response.text
+                    if response.status_code == 200 and book_res != -1:
+                        print("Connected to Booking API Endpoint")
+                        print("=========Booking Successful !!===========")
+                        return response.text
+                    else:
+                        print(f"Check customer status:Customer should not be in trip while booking!!")
+                        return -1
                 else:
-                    print(f"Check status:{response.text}")
-                    return -1
+                    print("Sorry,cab service is not available in this area!")
             else:
-                print("Sorry,cab service is not available in this area!")                
+                return 0
         else:
-            return 0  
+            print("Sorry,cab service is not available in destination area!") 
 
                 
 

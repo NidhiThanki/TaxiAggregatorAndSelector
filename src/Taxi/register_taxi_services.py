@@ -13,8 +13,10 @@ class Register_Taxi_Services:
         config = CommonUtil.read_properties()
         self._taxi_file_path = config.get("TAXI_CSV_FILE").data
         self._collection_name = config.get("TAXI_COLLECTION").data
-        self._max_lat = float(config.get("LAT_VALUE").data)
-        self._max_long = float(config.get("LONG_VALUE").data)
+        self._min_lat = float(config.get("MIN_LAT_VALUE").data)
+        self._min_long = float(config.get("MIN_LONG_VALUE").data)
+        self._max_lat = float(config.get("MAX_LAT_VALUE").data)
+        self._max_long = float(config.get("MAX_LONG_VALUE").data)
 
     # This method will read taxi data from CSV file
     # Generates random lat-long and taxi registration plate no
@@ -24,8 +26,8 @@ class Register_Taxi_Services:
             for taxi_data_row in taxies:
                 taxi_row = taxi_data_row.rstrip()
                 if taxi_row:
-                    long = random.uniform(self._max_lat, self._max_long)
-                    lat = random.uniform(self._max_lat, self._max_long)
+                    lat = random.uniform(self._min_lat, self._max_lat)
+                    long = random.uniform(self._min_long, self._max_long)
                     registration_plate_no = "KA0" + str(random.randint(1, 4)) + random.choice(string.ascii_uppercase) \
                                             + str(random.randint(1000, 9999))
 
