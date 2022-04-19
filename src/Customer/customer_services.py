@@ -19,13 +19,19 @@ class Customer_Services():
         config = CommonUtil.read_properties()
         self._customer_file_path = config.get("CUSTOMER_CSV_FILE").data
         self._collection_name = config.get("CUSTOMER_COLLECTION").data
-        self._min_lat = float(config.get("MIN_LAT_VALUE").data)
-        self._min_long = float(config.get("MIN_LONG_VALUE").data)
-        self._max_lat = float(config.get("MAX_LAT_VALUE").data)
-        self._max_long = float(config.get("MAX_LONG_VALUE").data)
+        self._json_file_path = config.get("AREA_BOUNDARY_JSON_PATH").data        
         self.post_url = "https://dbco8t3hz3.execute-api.us-east-1.amazonaws.com/register-customer"
         self.get_url = "https://dbco8t3hz3.execute-api.us-east-1.amazonaws.com/read-customer"
         self.book_url = "https://pjfnpvj0ce.execute-api.us-east-1.amazonaws.com/customer-book"
+        self._location_data_json()
+    
+    def _location_data_json(self):
+        with open(self._json_file_path, "r") as jsonFile:
+            json_data = json.load(jsonFile)
+        self._min_lat = float(json_data[0]["area_0"]["MIN_LAT_VALUE"])
+        self._max_lat = float(json_data[0]["area_0"]["MAX_LAT_VALUE"])
+        self._min_long = float(json_data[0]["area_0"]["MIN_LONG_VALUE"])
+        self._max_long = float(json_data[0]["area_0"]["MAX_LONG_VALUE"])
     
     # Latest error is used to store the error string in case an issue. It's reset at the beginning of a new function call
     @property
@@ -132,7 +138,7 @@ class Customer_Services():
             return -1
 
     # raise booking request and return nearest taxi
-    def booking(self,customer_first_name,customer_last_name,dest_lat,dest_long):
+    def booking(self,customer_first_name,customer_last_name,dest_lat,dest_long,taxi_type):
         # check if destination location is in service area boundary
         dest_res = self.check_location(dest_lat,dest_long)
         if dest_res != -1:
@@ -151,7 +157,7 @@ class Customer_Services():
                     # connecting to endpoint to send data
                     cust_id = read_res["customer_id"]
                     _timestamp=datetime.datetime.now()
-                    cust_data = {"timestamp":str(_timestamp),"customer_id": cust_id,"cust_lat":cust_lat,"cust_long":cust_long,"type":"Point","dest_lat":dest_lat,"dest_long":dest_long}
+                    cust_data = {"timestamp":str(_timestamp),"customer_id": cust_id,"cust_lat":cust_lat,"cust_long":cust_long,"type":"Point","taxi_type":taxi_type,"dest_lat":dest_lat,"dest_long":dest_long}
                     response = requests.get(self.book_url,params = cust_data)
                     book_res = json.loads(response.text)
 
@@ -169,12 +175,3 @@ class Customer_Services():
         else:
             print("Sorry,cab service is not available in destination area!") 
 
-                
-
-            
-            
-
-
-
-
-    

@@ -1,3 +1,4 @@
+from distutils.command.config import config
 from jproperties import Properties
 
 
@@ -11,7 +12,6 @@ class CommonUtil:
         configs = Properties()
         with open(config_filename, 'rb') as read_config_file:
             configs.load(read_config_file)
-
         return configs
 
 

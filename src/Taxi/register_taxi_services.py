@@ -1,9 +1,9 @@
 import random
 import string
+import json
 
 from src.Database.Database import Database
 from src.Util.CommonUtil import CommonUtil
-
 
 
 class Register_Taxi_Services:
@@ -13,10 +13,16 @@ class Register_Taxi_Services:
         config = CommonUtil.read_properties()
         self._taxi_file_path = config.get("TAXI_CSV_FILE").data
         self._collection_name = config.get("TAXI_COLLECTION").data
-        self._min_lat = float(config.get("MIN_LAT_VALUE").data)
-        self._min_long = float(config.get("MIN_LONG_VALUE").data)
-        self._max_lat = float(config.get("MAX_LAT_VALUE").data)
-        self._max_long = float(config.get("MAX_LONG_VALUE").data)
+        self._json_file_path = config.get("AREA_BOUNDARY_JSON_PATH").data 
+        self._location_data_json()
+    
+    def _location_data_json(self):
+        with open(self._json_file_path, "r") as jsonFile:
+            json_data = json.load(jsonFile)
+        self._min_lat = float(json_data[0]["area_0"]["MIN_LAT_VALUE"])
+        self._max_lat = float(json_data[0]["area_0"]["MAX_LAT_VALUE"])
+        self._min_long = float(json_data[0]["area_0"]["MIN_LONG_VALUE"])
+        self._max_long = float(json_data[0]["area_0"]["MAX_LONG_VALUE"])
 
     # This method will read taxi data from CSV file
     # Generates random lat-long and taxi registration plate no
