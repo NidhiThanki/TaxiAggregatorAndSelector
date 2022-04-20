@@ -45,8 +45,8 @@ class Customer_Services():
             for customer_row in customer_fh:
                 customer_row = customer_row.rstrip()
                 if customer_row:
-                    (customer_first_name, customer_last_name,customer_email,trip_indicator) = customer_row.split(',')                            
-                customer_data = {"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"customer_email":customer_email,"trip_indicator":trip_indicator}
+                    (customer_first_name, customer_last_name,customer_type,customer_email,trip_indicator) = customer_row.split(',')                            
+                customer_data = {"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"customer_email":customer_email,"customer_type":customer_type,"trip_indicator":trip_indicator}
                 customer_data_list.append(customer_data)
             return customer_data_list
             
@@ -59,35 +59,36 @@ class Customer_Services():
         cust_id = f"{cust_name}_{rand_num}"        
         return cust_id
 
-    # check for area boundary
+    # •	Service area validation: check for area boundary
     def check_location(self,lat,long):
         if self._min_lat <=  lat <= self._max_lat  and  self._min_long <=  long <= self._max_long:
             return 1
         return -1
         
     # register one customer
-    def register_one(self,customer_first_name,customer_last_name,customer_email,lat,long):
+    def register_one(self,customer_first_name,customer_last_name,customer_email,customer_type,lat,long):
         try:
             self._latest_error = '' 
-            # read customer customer details           
-            res = self.get_customer_details(customer_first_name,customer_last_name)
-            cust_res = json.loads(res)
-            if cust_res == -1:        
-                res = self.check_location(lat,long)                
-                if res == 1:            
+            # check location cordinates
+            loc_res = self.check_location(lat,long)
+            if loc_res != -1:
+                # read customer customer details           
+                res = self.get_customer_details(customer_first_name,customer_last_name)
+                cust_res = json.loads(res)
+                if cust_res == -1:                          
                     customer_id = self.generate_customer_id(customer_first_name,customer_last_name)
                     _timestamp=datetime.datetime.now()
-                    customer_data = {"timestamp":str(_timestamp),"customer_id":customer_id,"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"customer_email":customer_email,"location":{"type":"Point","coordinates":[long,lat]},"trip_indicator":"OFF"}        
+                    customer_data = {"timestamp":str(_timestamp),"customer_id":customer_id,"customer_type":customer_type,"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"customer_email":customer_email,"trip_indicator":"OFF","location":{"type":"Point","coordinates":[long,lat]}}        
                     self.register_connection([customer_data])
-                    print("==================Successful Registration!==================")
+                    print("==================Successful Registration!==================")               
                 else:
-                    print("Sorry,cab service is not available in this area!")
+                    print("Customer already registered!!")
             else:
-                print("Customer already exists!!")
+                print("Sorry, Cab service is not provided at this location!")
         except Exception as e:
             print("RegisterOneError:",str(e))
 
-    # registers many customer from list/csv files
+    # Customer simulation: registers many customer from list/csv files
     def register_many(self):
         try:
             customer_data = self.read_data_from_csv()
@@ -116,10 +117,9 @@ class Customer_Services():
         else:
             print("Check status!")
 
-    # API endpoint to read customer details
+    # connect to API gateway to read customer details
     def get_customer_details(self,customer_first_name,customer_last_name):
         try:
-            # cust_data = {"customer_first_name":customer_first_name,"customer_last_name":customer_last_name}
             data_req = {"req":"one","customer_first_name":customer_first_name,"customer_last_name":customer_last_name}
             # connecting to endpoint to send data
             response = requests.get(self.get_url,params = data_req)            
@@ -137,11 +137,12 @@ class Customer_Services():
         except:
             return -1
 
-    # raise booking request and return nearest taxi
-    def booking(self,customer_first_name,customer_last_name,dest_lat,dest_long,taxi_type):
-        # check if destination location is in service area boundary
+    # Booking and proximity search : raise booking request and return nearest taxi via API
+    def booking(self,customer_first_name,customer_last_name,source_lat,source_long,dest_lat,dest_long,taxi_type):
+        # check if source/destination location is in service area boundary
+        source_res= self.check_location(source_lat,source_long)
         dest_res = self.check_location(dest_lat,dest_long)
-        if dest_res != -1:
+        if source_res != -1 and dest_res != -1:
             try:
                 # read customer customer details           
                 res = self.get_customer_details(customer_first_name,customer_last_name)
@@ -149,29 +150,24 @@ class Customer_Services():
                 print(str(e))         
             read_res = json.loads(res)
             if read_res != -1:
-                cust_loc= read_res["location"]
-                cust_lat = cust_loc["coordinates"][1]
-                cust_long = cust_loc["coordinates"][0]
-                loc_res = self.check_location(cust_lat,cust_long)
-                if loc_res != -1 :
-                    # connecting to endpoint to send data
-                    cust_id = read_res["customer_id"]
-                    _timestamp=datetime.datetime.now()
-                    cust_data = {"timestamp":str(_timestamp),"customer_id": cust_id,"cust_lat":cust_lat,"cust_long":cust_long,"type":"Point","taxi_type":taxi_type,"dest_lat":dest_lat,"dest_long":dest_long}
-                    response = requests.get(self.book_url,params = cust_data)
-                    book_res = json.loads(response.text)
+                # connecting to endpoint to send data
+                cust_id = read_res["customer_id"]
+                _timestamp=datetime.datetime.now()
+                customer_type = read_res["customer_type"]
+                cust_data = {"timestamp":str(_timestamp),"customer_id": cust_id,"customer_type":customer_type,"source_lat":source_lat,"source_long":source_long,"type":"Point","taxi_type":taxi_type,"dest_lat":dest_lat,"dest_long":dest_long}
+                response = requests.get(self.book_url,params = cust_data)
+                book_res = json.loads(response.text)
 
-                    if response.status_code == 200 and book_res != -1:
-                        print("Connected to Booking API Endpoint")
-                        print("=========Booking Successful !!===========")
-                        return response.text
-                    else:
-                        print(f"Check customer status:Customer should not be in trip while booking!!")
-                        return -1
+                if response.status_code == 200 and book_res != -1:
+                    print("Connected to Booking API Endpoint")
+                    print("=========Booking Successful !!===========")
+                    return response.text
                 else:
-                    print("Sorry,cab service is not available in this area!")
+                    print(f"Check status in booking table for customer: {customer_first_name} {customer_last_name}")
+                    return -1
+               
             else:
                 return 0
         else:
-            print("Sorry,cab service is not available in destination area!") 
+            print("Sorry,cab service is not available in source/destination area!") 
 
