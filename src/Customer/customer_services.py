@@ -111,8 +111,8 @@ class Customer_Services():
         #creaating json data
         customer_data = json.dumps(cust_data)
         # connecting to endpoint to send data
-        response = requests.post(self.post_url,data=customer_data)
-        if response.status_code == 200:
+        res = requests.post(self.post_url,data=customer_data)
+        if res.status_code == 200:
             print("Connected to Register API Endpoint")
         else:
             print("Check status!")
@@ -152,12 +152,13 @@ class Customer_Services():
             if read_res != -1:
                 # connecting to endpoint to send data
                 cust_id = read_res["customer_id"]
+                cust_email = read_res["customer_email"]
                 _timestamp=datetime.datetime.now()
                 customer_type = read_res["customer_type"]
-                cust_data = {"timestamp":str(_timestamp),"customer_id": cust_id,"customer_type":customer_type,"source_lat":source_lat,"source_long":source_long,"type":"Point","taxi_type":taxi_type,"dest_lat":dest_lat,"dest_long":dest_long}
+                cust_data = {"timestamp":str(_timestamp),"customer_id": cust_id,"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"email_id":cust_email,"customer_type":customer_type,"source_lat":source_lat,"source_long":source_long,"type":"Point","taxi_type":taxi_type,"dest_lat":dest_lat,"dest_long":dest_long}
                 response = requests.get(self.book_url,params = cust_data)
                 book_res = json.loads(response.text)
-
+                # print(book_res)
                 if response.status_code == 200 and book_res != -1:
                     print("Connected to Booking API Endpoint")
                     print("=========Booking Successful !!===========")
