@@ -9,6 +9,7 @@ import random,json
 import datetime
 import requests
 from src.Util.CommonUtil import CommonUtil
+from src.Taxi.taxi_services import Taxi_Services
 
 # customer document contains customer_name (String), email (String), and role (String) fields
 class Customer_Services():
@@ -20,8 +21,8 @@ class Customer_Services():
         self._customer_file_path = config.get("CUSTOMER_CSV_FILE").data
         self._collection_name = config.get("CUSTOMER_COLLECTION").data
         self._json_file_path = config.get("AREA_BOUNDARY_JSON_PATH").data        
-        self.post_url = "https://dbco8t3hz3.execute-api.us-east-1.amazonaws.com/register-customer"
-        self.get_url = "https://dbco8t3hz3.execute-api.us-east-1.amazonaws.com/read-customer"
+        self.post_url = "https://ljve2mvdwd.execute-api.us-east-1.amazonaws.com/register-customer"
+        self.get_url = "https://ljve2mvdwd.execute-api.us-east-1.amazonaws.com/read-customer"
         self.book_url = "https://pjfnpvj0ce.execute-api.us-east-1.amazonaws.com/customer-book"
         self._location_data_json()
     
@@ -112,6 +113,7 @@ class Customer_Services():
         customer_data = json.dumps(cust_data)
         # connecting to endpoint to send data
         res = requests.post(self.post_url,data=customer_data)
+        # print(res)
         if res.status_code == 200:
             print("Connected to Register API Endpoint")
         else:
@@ -162,11 +164,16 @@ class Customer_Services():
                 if response.status_code == 200 and book_res != -1:
                     print("Connected to Booking API Endpoint")
                     print("=========Booking Successful !!===========")
-                    return response.text
-                else:
+                    print(response.text)
+                    taxi_services = Taxi_Services()
+                    trip_res = taxi_services.start_trip(response.text)
+                    # return response.text
+                elif book_res == -1:
                     print(f"Check status in booking table for customer: {customer_first_name} {customer_last_name}")
                     return -1
-               
+                else:
+                    print("Faiulre!!")
+                    return -1
             else:
                 return 0
         else:
