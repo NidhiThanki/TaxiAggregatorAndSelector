@@ -165,8 +165,7 @@ class Customer_Services():
                     print("Connected to Booking API Endpoint")
                     print("=========Booking Successful !!===========")
                     print(response.text)
-                    taxi_services = Taxi_Services()
-                    trip_res = taxi_services.start_trip(response.text)
+                    self.customer_trip(response.text)
                     # return response.text
                 elif book_res == -1:
                     print(f"Check status in booking table for customer: {customer_first_name} {customer_last_name}")
@@ -178,4 +177,10 @@ class Customer_Services():
                 return 0
         else:
             print("Sorry,cab service is not available in source/destination area!") 
+
+    # customer trip method 
+    def customer_trip(self,booking_details):
+        taxi_services = Taxi_Services()
+        trip_res = taxi_services.start_trip(booking_details)
+
 
