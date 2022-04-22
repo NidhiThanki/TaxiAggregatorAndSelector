@@ -10,7 +10,7 @@ taxi_services = Taxi_Services()
 #taxi_services.register_taxi_from_csv()
 
 # This method will register single taxi
-taxi_services.register_single_taxi("KA05A7845", "Deluxe", "Toyota RAV4")
+#taxi_services.register_single_taxi("KA05A7845", "Deluxe", "Toyota RAV4")
 print("Taxi Registered !!")
 
 print("###########################Customer Services#################################")
@@ -54,7 +54,7 @@ cust1 = Customer_Services()
 # # Randomly booking for customers who are already registered for cab services via API
 # res=cust1.booking(customer_first_name ="Captain",customer_last_name="A",source_lat=12.51,source_long=77.12,dest_lat=12.94,dest_long=77.43,taxi_type="Basic")
 
-res=cust1.booking(customer_first_name ="James",customer_last_name="Valdez",source_lat=12.60,source_long=77.20,dest_lat=12.94,dest_long=77.43,taxi_type="Any")
+res=cust1.booking(customer_first_name ="James",customer_last_name="Valdez",source_lat=12.65,source_long=77.56,dest_lat=12.94,dest_long=77.43,taxi_type="All")
 if res == 0:
     print("Customer not registered for services!")
 elif res !=-1:

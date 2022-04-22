@@ -9,16 +9,16 @@ from src.Util.CommonUtil import CommonUtil
 
 class Taxi_Services:
 
-
     def __init__(self):
         config = CommonUtil.read_properties()
         self._taxi_file_path = config.get("TAXI_CSV_FILE").data
         self._collection_name = config.get("TAXI_COLLECTION").data
         self._register_taxi_url = config.get("REGISTER_TAXI_URL").data
         self._trip_url = config.get("TRIP_URL").data
-        self._json_file_path = config.get("AREA_BOUNDARY_JSON_PATH").data 
+        self._get_taxi_url = config.get("GET_TAXI_DATA_URL").data
+        self._json_file_path = config.get("AREA_BOUNDARY_JSON_PATH").data
         self._location_data_json()
-    
+
     def _location_data_json(self):
         with open(self._json_file_path, "r") as jsonFile:
             json_data = json.load(jsonFile)
@@ -32,7 +32,7 @@ class Taxi_Services:
     # Store data into mongodb atlas using API gateway
     def register_taxi_from_csv(self):
 
-        with open(self._taxi_file_path, 'r',encoding='utf-8-sig') as taxies:
+        with open(self._taxi_file_path, 'r', encoding='utf-8-sig') as taxies:
             for taxi_data_row in taxies:
                 taxi_row = taxi_data_row.rstrip()
                 if taxi_row:
@@ -48,21 +48,25 @@ class Taxi_Services:
 
                 self.call_register_taxi_api(taxi_dtls)
 
-
     # This method will call API gateway which triggers lambda function
     def call_register_taxi_api(self, taxi_data):
         taxi_data_json = json.dumps(taxi_data)
         response = requests.post(self._register_taxi_url, data=taxi_data_json)
-        print("Response :", response)
+        print("Response from register taxi API :", response)
 
     # This method will register single taxi
     def register_single_taxi(self, registration_plate, taxi_type, taxi_name):
-        lat = random.uniform(self._min_lat, self._max_lat)
-        long = random.uniform(self._min_long, self._max_long)
-        taxi_dtls = {'taxi_id': registration_plate, 'taxi_type': taxi_type, 'taxi_name': taxi_name,
-                     'location': {"type": "Point", "coordinates": [long, lat]},
-                     'trip_indicator': "OFF"}
-        self.call_register_taxi_api(taxi_dtls)
+        taxi_exist = self.call_get_taxi_api(registration_plate)
+
+        if taxi_exist is None:
+            lat = random.uniform(self._min_lat, self._max_lat)
+            long = random.uniform(self._min_long, self._max_long)
+            taxi_dtls = {'taxi_id': registration_plate, 'taxi_type': taxi_type, 'taxi_name': taxi_name,
+                         'location': {"type": "Point", "coordinates": [long, lat]},
+                         'trip_indicator': "OFF"}
+            self.call_register_taxi_api(taxi_dtls)
+        else:
+            print(f"Taxi is registered with this registration plate {registration_plate}.")
 
     # This method will start trip of taxi
     def start_trip(self, booking_data):
@@ -78,6 +82,7 @@ class Taxi_Services:
         response = requests.post(self._trip_url, data=json.dumps(booking_dtls))
         print("Response :", response)
 
-
-
-
+    def call_get_taxi_api(self, taxi_id):
+        query_string_param = {"taxi_id": taxi_id}
+        response = requests.get(self._get_taxi_url, params=query_string_param)
+        return json.loads(response.text)
