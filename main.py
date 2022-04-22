@@ -18,8 +18,8 @@ cust = Customer_Services()
 
 # register one new customer via API
 cust1 = Customer_Services()
-# cust1.register_one("Captain","A","captA@gmail.com","Premium")
-cust1.register_one("Boba","Fett","bobaF@gmail.com","General",12.51,77.12)
+cust1.register_one("Mayuri","P","mayuri.phanslkr@gmail.com","Premium",12.52,77.14)
+# cust1.register_one("Boba","Fett","bobaF@gmail.com","General",12.51,77.12)
 
 
 # # get registered customer details
@@ -50,10 +50,11 @@ cust1.register_one("Boba","Fett","bobaF@gmail.com","General",12.51,77.12)
 
 # # Randomly booking for customers who are already registered for cab services via API
 # res=cust1.booking(customer_first_name ="Captain",customer_last_name="A",source_lat=12.51,source_long=77.12,dest_lat=12.94,dest_long=77.43,taxi_type="Basic")
-res=cust1.booking(customer_first_name ="Boba",customer_last_name="Fett",source_lat=12.60,source_long=77.20,dest_lat=12.94,dest_long=77.43,taxi_type="Deluxe")
-if res == 0:
-    print("Customer not registered for services!")
-elif res !=-1:
-    print("Taxi Details: ",res)
-else:
-    print("=========Booking Unsuccessful !!=========")
+# res=cust1.booking(customer_first_name ="Boba",customer_last_name="Fett",source_lat=12.60,source_long=77.20,dest_lat=12.94,dest_long=77.43,taxi_type="all")
+# res=cust1.booking(customer_first_name ="Mayuri",customer_last_name="P",source_lat=12.60,source_long=77.20,dest_lat=12.94,dest_long=77.43,taxi_type="all")
+# if res == 0:
+#     print("Customer not registered for services!")
+# elif res !=-1:
+#     print("Taxi Details: ",res)
+# else:
+#     print("=========Booking Unsuccessful !!=========")
