@@ -6,7 +6,7 @@ import random
 
 
 def main():    
-    print("########################### Book A Trip Service #################################")
+    print("########################### Simulation: Book A Trip Service #################################")
     # Customer Service Object
     cust_obj = Customer_Services()    
     '''get all registered customers details'''    
@@ -39,32 +39,27 @@ def main():
     # print("###########################Taxi Services#################################")
     # # Taxi Service Object
     # taxi_services = Taxi_Services()
-    #This method will register single taxi
-    # taxi_services.register_single_taxi("KA05A7845", "Deluxe", "Toyota RAV4")
+    # # This method will register single taxi
+    # taxi_services.register_single_taxi("KA05A2849", "Deluxe", "Toyota RAV4")
     # print("Taxi Registered !!")
 
-    # This method will register taxies from csv file
-    #taxi_services.register_taxi_from_csv()
+    # # This method will register taxies from csv file
+    # taxi_services.register_taxi_from_csv()
 
+
+    # # print("###########################Customer Services#################################")
     # '''register a new customer via API'''
     # cust1 = Customer_Services()
-    # cust1.register_one("Captain","A","capA@gmail.com","Premium",12.73,77.56)
-    # cust1.register_one("Mayuri","P","mayuri.phanslkr@gmail.com","Premium",12.73,77.56)
-    # cust1.register_one("Nidhi","T","nidhi.thanky@gmail.com","Premium",12.73,77.56)
-    # cust1.register_one("Aaron","D","aarondouyere25@gmail.com","Premium",12.73,77.56)
-    # cust1.register_one("Pavan","T","pavantalur@gmail.com","Premium",12.73,77.56)
+    # cust1.register_one("Rohit","K","rohitK@gmail.com","Premium",12.73,77.56)
+    
 
     # # get registered customer details
-    # res=cust1.get_customer_details("Boba","Fett")
+    # res=cust1.get_customer_details("Rohit","K")
     # print(res)
+
     # '''Randomly booking for customers who are already registered for cab services via API'''
     # book_res=cust1.booking(customer_first_name ="Rohit",customer_last_name="K",source_lat=12.60,source_long=77.20,dest_lat=12.94,dest_long=77.43,taxi_type="Deluxe")
-    # book_res=cust1.booking(customer_first_name ="Captain",customer_last_name="A",source_lat=12.51,source_long=77.12,dest_lat=12.94,dest_long=77.43,taxi_type="Basic")
-    # book_res=cust1.booking(customer_first_name ="Mayuri",customer_last_name="P",source_lat=12.60,source_long=77.20,dest_lat=12.94,dest_long=77.43,taxi_type="All")
-    # book_res=cust1.booking(customer_first_name ="Nidhi",customer_last_name="T",source_lat=12.60,source_long=77.20,dest_lat=12.94,dest_long=77.43,taxi_type="Luxury")
-    # book_res=cust1.booking(customer_first_name ="Aaron",customer_last_name="D",source_lat=12.60,source_long=77.20,dest_lat=12.94,dest_long=77.43,taxi_type="Luxury")
-    # book_res=cust1.booking(customer_first_name ="Pavan",customer_last_name="T",source_lat=12.60,source_long=77.20,dest_lat=12.94,dest_long=77.43,taxi_type="Luxury")
-
+   
     # if book_res == 0:
     #     print("Customer not registered for services!")
     # elif book_res !=-1:
@@ -72,7 +67,8 @@ def main():
     # else:
     #     print("=========Booking Unsuccessful !!=========")
 
-    # '''This method will start trip'''
+    # # '''This method will start trip'''
+    # if book_res == 1:
     #     taxi_services.start_trip(book_res)
 
 
