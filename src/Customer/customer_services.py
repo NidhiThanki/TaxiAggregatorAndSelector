@@ -23,7 +23,8 @@ class Customer_Services():
         self._json_file_path = config.get("AREA_BOUNDARY_JSON_PATH").data        
         self.post_url = "https://ljve2mvdwd.execute-api.us-east-1.amazonaws.com/register-customer"
         self.get_url = "https://ljve2mvdwd.execute-api.us-east-1.amazonaws.com/read-customer"
-        self.book_url = "https://pjfnpvj0ce.execute-api.us-east-1.amazonaws.com/customer-book"
+        self.book_url = "https://h9akdl5au8.execute-api.us-east-1.amazonaws.com/customer-book"
+        self.email_url = "https://tbu1kcyyy4.execute-api.us-east-1.amazonaws.com/send_email"
         self._location_data_json()
     
     def _location_data_json(self):
@@ -160,23 +161,40 @@ class Customer_Services():
                 cust_data = {"timestamp":str(_timestamp),"customer_id": cust_id,"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"email_id":cust_email,"customer_type":customer_type,"source_lat":source_lat,"source_long":source_long,"type":"Point","taxi_type":taxi_type,"dest_lat":dest_lat,"dest_long":dest_long}
                 response = requests.get(self.book_url,params = cust_data)
                 book_res = json.loads(response.text)
+                customer_name = customer_first_name + " " + customer_last_name
                 # print(book_res)
-                if response.status_code == 200 and book_res != -1:
+                self.send_email(book_res)
+                # # if response.status_code == 200 and book_res != -1:
+                if book_res["res"] != -1 :
                     print("Connected to Booking API Endpoint")
-                    print("=========Booking Successful !!===========")
-                    print(response.text)
-                    self.customer_trip(response.text)
-                    # return response.text
-                elif book_res == -1:
-                    print(f"Check status in booking table for customer: {customer_first_name} {customer_last_name}")
+                    print(f"=========Booking Successful for customer : {customer_name}!!===========")                    
+                    book_res.pop("msg")
+                    book_res.pop("email_id")
+                    book_res.pop("res")
+                    self.customer_trip(book_res)
+                    # return book_res
+                elif book_res["res"] == -1:
+                    print(f"Check status in booking table for customer: {customer_name}")
                     return -1
                 else:
                     print("Faiulre!!")
                     return -1
             else:
+                print("Customer not registered for services!")
                 return 0
         else:
             print("Sorry,cab service is not available in source/destination area!") 
+
+
+    def send_email(self,cust_data):
+        #creaating json data
+        customer_data = json.dumps(cust_data)
+        # connecting to endpoint to send email
+        res = requests.post(self.email_url,data=customer_data)
+        if res.text == 1:
+            print("=========email sent to customer!===========")
+        else:
+            print(res.text)
 
     # customer trip method 
     def customer_trip(self,booking_details):
