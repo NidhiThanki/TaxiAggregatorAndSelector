@@ -191,10 +191,8 @@ class Customer_Services():
         customer_data = json.dumps(cust_data)
         # connecting to endpoint to send email
         res = requests.post(self.email_url,data=customer_data)
-        if res.text == 1:
+        if json.loads(res.text) == 1:
             print("=========email sent to customer!===========")
-        else:
-            print(res.text)
 
     # customer trip method 
     def customer_trip(self,booking_details):
