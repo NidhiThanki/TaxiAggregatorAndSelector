@@ -14,6 +14,7 @@ from pymongo import MongoClient
 
 def lambda_handler(event, context):
     taxi_data = event['body']
+    # taxi_data = event['detail']['fullDocument']
     payload = base64.b64decode(taxi_data)
     payload = str(payload, 'utf-8')
 
@@ -26,6 +27,7 @@ def lambda_handler(event, context):
     location_collection = db_name['taxi_location_update_data']
     taxi_collection = db_name["taxi_registration_data"]
     customer_collection = db_name["customer_registration_data"]
+    booking_collection = db_name["booking_data"]
 
     start = geopy.Point(payload_rec["cust_loc"]["coordinates"][1],
                         payload_rec["cust_loc"]["coordinates"][0])
@@ -39,6 +41,7 @@ def lambda_handler(event, context):
         time_for_simulation = current_time + timedelta(minutes=time_inc)
         location_update_data = {
             "taxi_id": payload_rec["taxi_id"],
+            "booking_id": payload_rec["booking_id"],
             "timestamp": str(time_for_simulation),
             "location": {"type": "Point",
                          "coordinates": [list_of_points[2][idx], list_of_points[1][idx]]},
@@ -46,13 +49,13 @@ def lambda_handler(event, context):
         }
         res = location_collection.insert_one(location_update_data)
         time_inc += 1
-        print("Result after insert_one :", res)
+        print("Result after insert_one :", res.inserted_id)
 
     # update trip_indicator in  customer_collection
     key_of_customer = {"customer_id": payload_rec["customer_id"]}
     customer_data = {"$set": {"trip_indicator": "OFF"}}
     res = customer_collection.update_one(key_of_customer, customer_data)
-    print("Result after customer update_one :", res)
+    print("Result after customer update_one :", res.matched_count)
 
     # update trip_indicator and location of taxi in Register_taxi collection
     dest_long = payload_rec["cust_desti_loc"]["coordinates"][0]
@@ -61,7 +64,13 @@ def lambda_handler(event, context):
     latest_taxi_data = {
         "$set": {"trip_indicator": "OFF", "location": {"type": "Point", "coordinates": [dest_long, dest_lat]}}}
     res = taxi_collection.update_one(key_of_taxi, latest_taxi_data)
-    print("Result after taxi's update_one :", res)
+    print("Result after taxi's update_one :", res.matched_count)
+
+    # update trip_indicator in booking collection
+    key_booking = {"booking_id":payload_rec["booking_id"]}
+    updated_fields = {"$set": {"trip_indicator": "Complete"}}
+    res = booking_collection.update_one(key_booking,updated_fields)
+    print("Result after updating booking fields : ", res.matched_count)
 
     response_obj = {"statusCode": 200, "Simmulation": "Completed for taxi " + payload_rec["taxi_id"]}
 

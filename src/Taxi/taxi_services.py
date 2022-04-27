@@ -75,6 +75,7 @@ class Taxi_Services:
         booking_dtls["cust_loc"] = booking_data["cust_source_loc"]
         booking_dtls["cust_desti_loc"] = booking_data["cust_dest_loc"]
         booking_dtls["customer_id"] = booking_data["customer_id"]
+        booking_dtls["booking_id"] = booking_data["booking_id"]
         self.call_trip_api(booking_dtls)
 
     # This method will call API Gateway which triggers Taxi_Trip Function
