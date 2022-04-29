@@ -20,11 +20,11 @@ class Customer_Services():
         config = CommonUtil.read_properties()
         self._customer_file_path = config.get("CUSTOMER_CSV_FILE").data
         self._collection_name = config.get("CUSTOMER_COLLECTION").data
-        self._json_file_path = config.get("AREA_BOUNDARY_JSON_PATH").data        
-        self.post_url = "https://ljve2mvdwd.execute-api.us-east-1.amazonaws.com/register-customer"
-        self.get_url = "https://ljve2mvdwd.execute-api.us-east-1.amazonaws.com/read-customer"
-        self.book_url = "https://h9akdl5au8.execute-api.us-east-1.amazonaws.com/customer-book"
-        self.email_url = "https://tbu1kcyyy4.execute-api.us-east-1.amazonaws.com/send_email"
+        self._json_file_path = config.get("AREA_BOUNDARY_JSON_PATH").data
+        self.post_url = config.get("POST_URL").data   
+        self.get_url = config.get("GET_URL").data 
+        self.book_url = config.get("BOOK_URL").data 
+        self.email_url = config.get("EMAIL_URL").data
         self._location_data_json()
     
     def _location_data_json(self):

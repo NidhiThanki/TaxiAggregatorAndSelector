@@ -1,4 +1,4 @@
-''' author: mayuri dte: 04/24/2022'''
+''' author: mayuri date: 04/24/2022'''
 
 # TaxiAggregatorAndSelector
 
@@ -14,9 +14,9 @@ src folder
 		- taxi csv file
 		- area boundary json structure
 - Custoemr folder : contains customer script
-			- used for creating customer object from custoemr service class.
+			- used for creating customer object from customer service class.
 			- used to access customer data using different methods defined.
 - Taxi folder : contains taxi script
 			- used for creating taxi object from taxiclass
 			- used to access taxi data using different methods defined.
-- Util folder : contains code to read and hadle config files.
+- Util folder : contains code to read and handle config files.
