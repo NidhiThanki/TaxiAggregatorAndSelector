@@ -153,32 +153,38 @@ class Customer_Services():
                 print(str(e))         
             read_res = json.loads(res)
             if read_res != -1:
-                # connecting to endpoint to send data
-                cust_id = read_res["customer_id"]
-                cust_email = read_res["customer_email"]
-                _timestamp=datetime.datetime.now()
-                customer_type = read_res["customer_type"]
-                cust_data = {"timestamp":str(_timestamp),"customer_id": cust_id,"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"email_id":cust_email,"customer_type":customer_type,"source_lat":source_lat,"source_long":source_long,"type":"Point","taxi_type":taxi_type,"dest_lat":dest_lat,"dest_long":dest_long}
-                response = requests.get(self.book_url,params = cust_data)
-                book_res = json.loads(response.text)
-                customer_name = customer_first_name + " " + customer_last_name
-                # print(book_res)
-                self.send_email(book_res)
-                # # if response.status_code == 200 and book_res != -1:
-                if book_res["res"] != -1 :
-                    print("Connected to Booking API Endpoint")
-                    print(f"=========Booking Successful for customer : {customer_name}!!===========")                    
-                    book_res.pop("msg")
-                    book_res.pop("email_id")
-                    book_res.pop("res")
-                    self.customer_trip(book_res)
-                    # return book_res
-                elif book_res["res"] == -1:
-                    print(f"Check status in booking table for customer: {customer_name}")
-                    return -1
+                # check if customer is "General" and  already in trip
+                cust_trip_ind = read_res["trip_indicator"]
+                cust_type = read_res["customer_type"]
+                if cust_trip_ind == "ON" and cust_type == "General":
+                    print("Customer not premium member, not allowed to book taxi while in trip !")
                 else:
-                    print("Faiulre!!")
-                    return -1
+                    # connecting to endpoint to send data
+                    cust_id = read_res["customer_id"]
+                    cust_email = read_res["customer_email"]
+                    _timestamp=datetime.datetime.now()
+                    customer_type = read_res["customer_type"]
+                    cust_data = {"timestamp":str(_timestamp),"customer_id": cust_id,"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"email_id":cust_email,"customer_type":customer_type,"source_lat":source_lat,"source_long":source_long,"type":"Point","taxi_type":taxi_type,"dest_lat":dest_lat,"dest_long":dest_long}
+                    response = requests.get(self.book_url,params = cust_data)
+                    book_res = json.loads(response.text)
+                    customer_name = customer_first_name + " " + customer_last_name
+                    # print(book_res)
+                    self.send_email(book_res)
+                    # # if response.status_code == 200 and book_res != -1:
+                    if book_res["res"] != -1 :
+                        print("Connected to Booking API Endpoint")
+                        print(f"=========Booking Successful for customer : {customer_name}!!===========")                    
+                        book_res.pop("msg")
+                        book_res.pop("email_id")
+                        book_res.pop("res")
+                        self.customer_trip(book_res)
+                        # return book_res
+                    elif book_res["res"] == -1:
+                        print(f"Check status in booking table for customer: {customer_name}")
+                        return -1
+                    else:
+                        print("Faiulre!!")
+                        return -1
             else:
                 print("Customer not registered for services!")
                 return 0
