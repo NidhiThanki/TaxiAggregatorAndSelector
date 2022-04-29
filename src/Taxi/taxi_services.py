@@ -80,8 +80,8 @@ class Taxi_Services:
 
     # This method will call API Gateway which triggers Taxi_Trip Function
     def call_trip_api(self, booking_dtls):
-        response = requests.post(self._trip_url, data=json.dumps(booking_dtls))
-        print("Response :", response)
+        resp = requests.post(self._trip_url, data=json.dumps(booking_dtls))
+        print("Response from Trip :", resp)
 
     def call_get_taxi_api(self, taxi_id):
         query_string_param = {"taxi_id": taxi_id}
