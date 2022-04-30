@@ -148,7 +148,7 @@ def lambda_handler(event, context):
         if booking_req:
             booking.insert_one(booking_req)
             print("Data inserted in booking table! ")
-            dict_msg = {"res": res, "msg": msg, "email_id": email_id}
+            dict_msg = {"res": res, "msg": msg, "email_id": email_id,"status":"Booking Status"}
             if res == 1:
                 booking_details = {**dict_msg, **booking_details}
             else:

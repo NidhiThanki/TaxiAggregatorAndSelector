@@ -9,6 +9,7 @@ from pymongo import MongoClient
 
 def lambda_handler(event, context):
     try:
+        res = -1
         data=event['body']
         byte_data = base64.b64decode(data)
         decode_data=json.loads(str(byte_data, 'utf-8'))    
@@ -20,12 +21,11 @@ def lambda_handler(event, context):
         aggregator_db = aggregator_cli['taxi_aggregation_selection']
         # Create Collection
         customers = aggregator_db['customer_registration_data']
-        # res = customers.delete_many({})
         
         # Populate the Collections
-        res = customers.insert_many(decode_data)
-        
-        if res:
+        reg_res = customers.insert_many(decode_data)
+        print("register: ",reg_res)
+        if reg_res:
             for decode_data in decode_data:
                 customer_id = decode_data["customer_id"]
                 email_id=decode_data["customer_email"]
@@ -33,33 +33,10 @@ def lambda_handler(event, context):
                 customer_type=decode_data["customer_type"]
             customer_name = decode_data["customer_first_name"] + " " + decode_data["customer_last_name"]
             msg = f"Customer: {customer_name} of user type: {customer_type} is successfully registerd with customer id: {customer_id} on date: {timestamp} for receiving cab services "
-            try:
-                ses_client = boto3.client("ses", region_name="us-east-1") 
-                CHARSET = "UTF-8"
-                response = ses_client.send_email(
-                    Destination={
-                        "ToAddresses": [
-                            email_id
-                        ],
-                    },
-                    Message={
-                        "Body": {
-                            "Text": {
-                                "Charset": CHARSET,
-                                "Data": msg,
-                            }
-                        },
-                        "Subject": {
-                            "Charset": CHARSET,
-                            "Data": "Registration Status",
-                        },
-                    },
-                    Source=email_id,
-                    )
-            except Exception as e:
-                print(str(e))
-                return 1
-            return 1
+            res = 1
+            dict_msg = {"res": res, "msg": msg, "email_id": email_id, "status":"Registration Status"}
+            return dict_msg
+           
     except Exception as e:
         print(str(e))
-        return -1
+        return {"res":-1}

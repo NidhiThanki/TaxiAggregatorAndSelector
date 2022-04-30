@@ -81,10 +81,12 @@ class Customer_Services():
                     customer_id = self.generate_customer_id(customer_first_name,customer_last_name)
                     _timestamp=datetime.datetime.now()
                     customer_data = {"timestamp":str(_timestamp),"customer_id":customer_id,"customer_type":customer_type,"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"customer_email":customer_email,"trip_indicator":"OFF","location":{"type":"Point","coordinates":[long,lat]}}        
-                    self.register_connection([customer_data])
-                    print("==================Successful Registration!==================")               
+                    reg_res = self.register_connection([customer_data]) 
+                    if reg_res["res"] != -1:
+                        self.send_email(reg_res)  
+                        print("==================Successful Registration!==================")            
                 else:
-                    print("Customer already registered!!")
+                    print("==============Customer already registered!! ====================")
             else:
                 print("Sorry, Cab service is not provided at this location!")
         except Exception as e:
@@ -104,7 +106,6 @@ class Customer_Services():
                 val["location"]={"type":"Point","coordinates":[long,lat]}
                 self.customer_data_list.append(val)
             self.register_connection(self.customer_data_list)
-            print("==================Successful Registration!==================")
         except Exception as e:
             print("RegisterManyError:",str(e))        
 
@@ -114,11 +115,13 @@ class Customer_Services():
         customer_data = json.dumps(cust_data)
         # connecting to endpoint to send data
         res = requests.post(self.post_url,data=customer_data)
-        # print(res)
-        if res.status_code == 200:
-            print("Connected to Register API Endpoint")
+        reg_res = json.loads(res.text)
+        if reg_res["res"] != -1:
+            print("==================Connected to Register API==================")
+            return reg_res
         else:
             print("Check status!")
+            return {"res":-1}
 
     # connect to API gateway to read customer details
     def get_customer_details(self,customer_first_name,customer_last_name):
@@ -170,7 +173,6 @@ class Customer_Services():
                     customer_name = customer_first_name + " " + customer_last_name
                     # print(book_res)
                     self.send_email(book_res)
-                    # # if response.status_code == 200 and book_res != -1:
                     if book_res["res"] != -1 :
                         print("Connected to Booking API Endpoint")
                         print(f"=========Booking Successful for customer : {customer_name}!!===========")                    

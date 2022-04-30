@@ -7,10 +7,19 @@ def lambda_handler(event, context):
         data=event['body']
         byte_data = base64.b64decode(data)
         data =json.loads(str(byte_data, 'utf-8'))   
+        print(data)
         email_id = data["email_id"]
         msg = data["msg"]
+        status = data["status"]
         print(msg)
         ses_client = boto3.client("ses", region_name="us-east-1") 
+        email_list = ses_client.list_identities(IdentityType = 'EmailAddress',MaxItems=10)
+        # print(email_list['Identities'])
+        if email_id not in email_list['Identities']:
+            # for email verification
+            response = ses_client.verify_email_identity(EmailAddress=email_id)
+        else:
+            print(f"Email: {email_id} already verified!")
         CHARSET = "UTF-8"
         response = ses_client.send_email(
             Destination={
@@ -27,7 +36,7 @@ def lambda_handler(event, context):
                 },
                 "Subject": {
                     "Charset": CHARSET,
-                    "Data": "Booking Status",
+                    "Data": status,
                 },
             },
             Source=email_id
