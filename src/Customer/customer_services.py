@@ -3,6 +3,7 @@
 
 # Imports ObjectId to convert to the correct format before querying in the db
 from asyncore import read
+import email
 from bson.objectid import ObjectId
 from random import randint
 import random,json
@@ -86,7 +87,7 @@ class Customer_Services():
                         self.send_email(reg_res)  
                         print("==================Successful Registration!==================")            
                 else:
-                    print("==============Customer already registered!! ====================")
+                    print("============Customer already registered!! ====================")
             else:
                 print("Sorry, Cab service is not provided at this location!")
         except Exception as e:
@@ -199,8 +200,13 @@ class Customer_Services():
         customer_data = json.dumps(cust_data)
         # connecting to endpoint to send email
         res = requests.post(self.email_url,data=customer_data)
-        if json.loads(res.text) == 1:
+        email_res = json.loads(res.text)
+        if email_res == 1:
             print("=========email sent to customer!===========")
+        elif email_res == 0:
+            print("Email needs to be verified by customer!")
+        else:
+            print("Check status! Mostly email id not valid!")
 
     # customer trip method 
     def customer_trip(self,booking_details):
