@@ -89,7 +89,7 @@ class Customer_Services():
                 else:
                     print("============Customer already registered!! ====================")
             else:
-                print("Sorry, Cab service is not provided at this location!")
+                print("===========Sorry, Cab service is not provided at this location!=============")
         except Exception as e:
             print("RegisterOneError:",str(e))
 
@@ -161,7 +161,7 @@ class Customer_Services():
                 cust_trip_ind = read_res["trip_indicator"]
                 cust_type = read_res["customer_type"]
                 if cust_trip_ind == "ON" and cust_type == "General":
-                    print("Customer not premium member, not allowed to book taxi while in trip !")
+                    print("=======Customer not premium member, not allowed to book taxi while in trip! =========")
                 else:
                     # connecting to endpoint to send data
                     cust_id = read_res["customer_id"]
@@ -175,7 +175,7 @@ class Customer_Services():
                     # print(book_res)
                     self.send_email(book_res)
                     if book_res["res"] != -1 :
-                        print("Connected to Booking API Endpoint")
+                        print("=========Connected to Booking API Endpoint==========")
                         print(f"=========Booking Successful for customer : {customer_name}!!===========")                    
                         book_res.pop("msg")
                         book_res.pop("email_id")
@@ -183,16 +183,16 @@ class Customer_Services():
                         self.customer_trip(book_res)
                         # return book_res
                     elif book_res["res"] == -1:
-                        print(f"Check status in booking table for customer: {customer_name}")
+                        print(f"=========Check status in booking table for customer: {customer_name}===========")
                         return -1
                     else:
-                        print("Faiulre!!")
+                        print("===Faiulre!!===")
                         return -1
             else:
-                print("Customer not registered for services!")
+                print("===========Customer not registered for services! ============")
                 return 0
         else:
-            print("Sorry,cab service is not available in source/destination area!") 
+            print("==========Sorry,cab service is not available in source/destination area!=========") 
 
 
     def send_email(self,cust_data):
@@ -202,11 +202,11 @@ class Customer_Services():
         res = requests.post(self.email_url,data=customer_data)
         email_res = json.loads(res.text)
         if email_res == 1:
-            print("=========email sent to customer!===========")
+            print("=========Email sent to customer!===========")
         elif email_res == 0:
-            print("Email needs to be verified by customer!")
+            print("=========Email needs to be verified by customer! ==========")
         else:
-            print("Check status! Mostly email id not valid!")
+            print("=========Check status! Mostly email id not valid! =========")
 
     # customer trip method 
     def customer_trip(self,booking_details):
