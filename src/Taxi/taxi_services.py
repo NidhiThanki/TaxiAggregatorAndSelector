@@ -52,7 +52,10 @@ class Taxi_Services:
     def call_register_taxi_api(self, taxi_data):
         taxi_data_json = json.dumps(taxi_data)
         response = requests.post(self._register_taxi_url, data=taxi_data_json)
-        print("Response from register taxi API :", response)
+        if response.status_code == 200:
+            print("Taxi registered successfully")
+        else:
+            print("Error while registration of Taxi:", response)
 
     # This method will register single taxi
     def register_single_taxi(self, registration_plate, taxi_type, taxi_name):
@@ -66,7 +69,7 @@ class Taxi_Services:
                          'trip_indicator': "OFF"}
             self.call_register_taxi_api(taxi_dtls)
         else:
-            print(f"Taxi is registered with this registration plate {registration_plate}.")
+            print(f"Taxi is already registered with this registration plate {registration_plate}.")
 
     # This method will start trip of taxi
     def start_trip(self, booking_data):
@@ -81,7 +84,10 @@ class Taxi_Services:
     # This method will call API Gateway which triggers Taxi_Trip Function
     def call_trip_api(self, booking_dtls):
         resp = requests.post(self._trip_url, data=json.dumps(booking_dtls))
-        print("Response from Trip :", resp)
+        if resp.status_code == 200:
+            print("Trip simulation completed")
+        else:
+            print("Trip simulation interrupted  :", resp)
 
     def call_get_taxi_api(self, taxi_id):
         query_string_param = {"taxi_id": taxi_id}
