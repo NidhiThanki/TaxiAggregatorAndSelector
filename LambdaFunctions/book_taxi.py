@@ -65,18 +65,22 @@ def lambda_handler(event, context):
             srclat = cust_source_loc["coordinates"][1]
             # print(srclong,srclat)
             start = geopy.Point(srclat, srclong)
-            # Getting taxis for  customer
+            # Query: taxis for  customer within 10km and required taxi type
             range_taxi_type_query = {'location': SON([("$near", cust_source_loc), ("$maxDistance", 10000)]),
                            'trip_indicator': {"$ne": "ON"},'taxi_type': {"$eq": taxi_type}}
+           # Query: taxis for  customer within 10km and default taxi type
             range_default_taxi_type_query = {'location': SON([("$near", cust_source_loc), ("$maxDistance", 10000)]),
                            'trip_indicator': {"$ne": "ON"}}
+            # Query: taxis for  customer within 10km
             range_query = {'location': SON([("$near", cust_source_loc), ("$maxDistance", 10000)]),
                            'trip_indicator': {"$ne": "ON"}}
+            # Query: avaialble taxis for  customer 
             nearest_query = {'location': {"$near": cust_source_loc}, 'trip_indicator': {"$ne": "ON"}}
             if taxi_type.lower() == "all":
                 query = range_default_taxi_type_query
             else:
                 query = range_taxi_type_query
+            # Getting taxis for  customer within 10km and required/default taxi type
             for doc in taxis.find(query).limit(1):
                 doc.pop('_id')
                 nearest_taxi_details = doc
@@ -92,6 +96,7 @@ def lambda_handler(event, context):
                 booking_status = "Failure"
                 taxi_id = "None"
                 comment = "No taxis available within 10km range from customer with required taxi type.Sending other taxi options to customer!"
+                # Getting taxis for  customer within 10km
                 for doc in taxis.find(range_query).limit(1):
                     doc.pop('_id')
                     nearest_taxi_details = doc
@@ -102,6 +107,7 @@ def lambda_handler(event, context):
                     print(doc)
                 else:
                     comment = "No taxis available within 10km range from customer.Sending other taxi options to customer!"
+                    # Getting available taxis for  customer 
                     for doc in taxis.find(nearest_query).limit(1):
                         doc.pop('_id')
                         nearest_taxi_details = doc
