@@ -208,8 +208,11 @@ class Customer_Services():
                         self.customer_trip(book_res)
                         # return book_res
                     elif book_res["res"] == -1:
+                        print(book_res)
                         print(f"=========Check status in booking table for customer: {customer_name}===========")
                         return -1
+                    elif book_res["res"] == 0:
+                        print("===========Customer not allowed for booking services! ============")
                     else:
                         print("===Faiulre!!===")
                         return -1

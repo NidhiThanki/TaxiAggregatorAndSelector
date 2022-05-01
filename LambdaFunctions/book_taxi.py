@@ -18,6 +18,7 @@ import string
 def lambda_handler(event, context):
     try:
         booking_req = None
+        book_data =None
         nearest_taxi_details = None
         res = -1
         cust_data = event['queryStringParameters']
@@ -50,7 +51,7 @@ def lambda_handler(event, context):
             else:
                 book_req = -1
                 comment = "Customer not premium member, not allowed to book taxi while in trip "
-                res = -1
+                res = 0
         else:
             book_req = 1
         if book_req == 1:
@@ -64,34 +65,56 @@ def lambda_handler(event, context):
             srclat = cust_source_loc["coordinates"][1]
             # print(srclong,srclat)
             start = geopy.Point(srclat, srclong)
-            # Getting taxis within a certain 10km range from a customer
+            # Getting taxis for  customer
+            range_taxi_type_query = {'location': SON([("$near", cust_source_loc), ("$maxDistance", 10000)]),
+                           'trip_indicator': {"$ne": "ON"},'taxi_type': {"$eq": taxi_type}}
+            range_default_taxi_type_query = {'location': SON([("$near", cust_source_loc), ("$maxDistance", 10000)]),
+                           'trip_indicator': {"$ne": "ON"}}
             range_query = {'location': SON([("$near", cust_source_loc), ("$maxDistance", 10000)]),
                            'trip_indicator': {"$ne": "ON"}}
-            for doc in taxis.find(range_query):
+            nearest_query = {'location': {"$near": cust_source_loc}, 'trip_indicator': {"$ne": "ON"}}
+            if taxi_type.lower() == "all":
+                query = range_default_taxi_type_query
+            else:
+                query = range_taxi_type_query
+            for doc in taxis.find(query).limit(1):
                 doc.pop('_id')
-                taxi_in_range.append(doc["taxi_id"])
+                nearest_taxi_details = doc
+            if nearest_taxi_details:
+                res = 1
                 end = geopy.Point(doc['location']['coordinates'][1], doc['location']['coordinates'][0])
-                # print("total distance " + str(geodesic(start, end)))
-            # print(taxi_in_range)
-            if len(taxi_in_range) > 0:
-                # Getting the nearest taxis to a customer
-                print('######################## THE NEAREST TAXI ########################')
-                if taxi_type.lower() == "all":
-                    nearest_query = {'location': {"$near": cust_source_loc}, 'trip_indicator': {"$ne": "ON"}}
-                else:
-                    nearest_query = {'location': {"$near": cust_source_loc}, 'trip_indicator': {"$ne": "ON"},
-                                     'taxi_type': {"$eq": taxi_type}}
-                for doc in taxis.find(nearest_query).limit(1):
+                dist_dict = {"distance_km": geodesic(start, end).km}
+                print(doc)
+                booking_status = "Successful"
+                comment = "Success"
+                taxi_id = nearest_taxi_details['taxi_id']
+            else:
+                booking_status = "Failure"
+                taxi_id = "None"
+                comment = "No taxis available within 10km range from customer with required taxi type.Sending other taxi options to customer!"
+                for doc in taxis.find(range_query).limit(1):
                     doc.pop('_id')
                     nearest_taxi_details = doc
-                    # calculating distance
+                if nearest_taxi_details:
+                    taxi_id = nearest_taxi_details['taxi_id']
                     end = geopy.Point(doc['location']['coordinates'][1], doc['location']['coordinates'][0])
                     dist_dict = {"distance_km": geodesic(start, end).km}
                     print(doc)
-                if nearest_taxi_details:
-                    booking_status = "Successful"
-                    comment = "Success"
-                    taxi_id = nearest_taxi_details['taxi_id']
+                else:
+                    comment = "No taxis available within 10km range from customer.Sending other taxi options to customer!"
+                    for doc in taxis.find(nearest_query).limit(1):
+                        doc.pop('_id')
+                        nearest_taxi_details = doc
+                    if nearest_taxi_details:
+                        taxi_id = nearest_taxi_details['taxi_id']
+                        end = geopy.Point(doc['location']['coordinates'][1], doc['location']['coordinates'][0])
+                        dist_dict = {"distance_km": geodesic(start, end).km}
+                        print(doc)
+                    else:
+                        comment = "Sorry, No taxis available !!"
+            if nearest_taxi_details:
+                book_data = {**dist_dict, **nearest_taxi_details}
+                if res == 1:
                     # Updating trip indicator for nearest taxi.
                     filter1 = {'taxi_id': taxi_id}
                     # Values to be updated.
@@ -115,45 +138,34 @@ def lambda_handler(event, context):
                     booking_details = booking_req.copy()
                     [booking_details.pop(key) for key in ["timestamp", "taxi_id", "booking_status", "comment"]]
                     # unpacking dicts for:  trip start request details
-                    booking_details = {**dist_dict, **nearest_taxi_details, **booking_details}
+                    booking_details = {**book_data, **booking_details}
                     msg = f"Customer: {customer_name} of user type: {customer_type} with customer id: {customer_id} is successfully booked on date: {_timestamp}. These are the details : {booking_details}"
-                    res = 1
                 else:
-                    booking_status = "Failure"
-                    taxi_id = "None"
-                    comment = "Taxi type selected by customer not available! "
                     booking_req = {"timestamp": _timestamp, "customer_id": customer_id, "customer_type": customer_type,
-                                   "taxi_id": taxi_id, "cust_source_loc": cust_source_loc,
-                                   " cust_dest_loc": cust_dest_loc, "booking_status": booking_status,
-                                   "trip_indictor": "OFF", "comment": comment,"booking_id": booking_id}
-                    msg = f"Booking Failed for customer: {customer_name} of user type: {customer_type} with customer id: {customer_id} on date: {_timestamp}. These are the details : {comment}"
+                                   "taxi_id": "None", "cust_source_loc": cust_source_loc, " cust_dest_loc": cust_dest_loc,
+                                   "booking_status": booking_status, "trip_indictor": "OFF", "comment": comment,"booking_id": booking_id}
+                    if book_data != None:
+                        booking_details = booking_req.copy()
+                        [booking_details.pop(key) for key in ["timestamp", "taxi_id", "booking_status", "comment"]]
+                        msg = f"Booking Failed for customer: {customer_name} of user type: {customer_type} with customer id: {customer_id} on date: {_timestamp}.These are the details : {comment}.Here are available taxi options : {book_data}"
+                    else:
+                        msg = f"Booking Failed for customer: {customer_name} of user type: {customer_type} with customer id: {customer_id} on date: {_timestamp}.These are the details : {comment}."
             else:
-                booking_status = "Failure"
-                taxi_id = "None"
-                comment = "No taxis available within 10km range from customer!"
-                booking_req = {"timestamp": _timestamp, "customer_id": customer_id, "customer_type": customer_type,
-                               "taxi_id": taxi_id, "cust_source_loc": cust_source_loc, "cust_dest_loc": cust_dest_loc,
-                               "booking_status": booking_status, "trip_indictor": "OFF", "comment": comment,"booking_id": booking_id}
-                msg = f"Booking Failed for customer: {customer_name} of user type: {customer_type} with customer id: {customer_id} on date: {_timestamp}. These are the details : {comment}"
-        else:
-            booking_status = "Failure"
-            taxi_id = "None"
-            booking_req = {"timestamp": _timestamp, "customer_id": customer_id, "customer_type": customer_type,
-                           "taxi_id": taxi_id, "cust_source_loc": cust_source_loc, " cust_dest_loc": cust_dest_loc,
-                           "booking_status": booking_status, "trip_indictor": "OFF", "comment": comment,"booking_id": booking_id}
-            msg = f"Booking Failed for customer: {customer_name} of user type: {customer_type} with customer id: {customer_id} on date: {_timestamp}. These are the details : {comment}"
-        print("Booking Request to insert data:", booking_req)
-        # print("Booking Details for trip start:" ,booking_details)
-        # Populating booking data collection
-        if booking_req:
-            booking.insert_one(booking_req)
-            print("Data inserted in booking table! ")
-            dict_msg = {"res": res, "msg": msg, "email_id": email_id,"status":"Booking Status"}
-            if res == 1:
-                booking_details = {**dict_msg, **booking_details}
-            else:
-                booking_details = dict_msg
-        return booking_details
+                return {"res": -1}
+            print("Booking Request to insert data:", booking_req)
+            print("Booking Details for trip start:" ,booking_details)
+            print("MSG: ",msg)
+            # Populating booking data collection
+            if booking_req:
+                booking.insert_one(booking_req)
+                print("Data inserted in booking table! ")
+                dict_msg = {"res": res, "msg": msg, "email_id": email_id,"status":"Booking Status"}
+                if res == 1:
+                    booking_details = {**dict_msg, **booking_details}
+                else:
+                    booking_details = dict_msg
+            return booking_details
+        return {"res":res}
     except Exception as e:
         print("exception")
         pprint.pprint(str(e))
