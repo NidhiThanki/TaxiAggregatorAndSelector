@@ -27,12 +27,11 @@ def lambda_handler(event,context):
             return -1
         else:
             customer_data = -1
-            cust_first_name = cust_data["customer_first_name"]
-            cust_last_name = cust_data["customer_last_name"]
+            mob_num = int(cust_data["mobile_number"])
             try:
                 for doc in customers.find():
                     doc.pop('_id')
-                    if doc["customer_first_name"] == cust_first_name and doc["customer_last_name"] == cust_last_name :
+                    if doc["mobile_number"] == mob_num:
                         customer_data= doc
                 return customer_data                
             except Exception as e:
@@ -41,5 +40,3 @@ def lambda_handler(event,context):
     except Exception as e:
         pprint.pprint(str(e))
         return -1
-
-        

@@ -26,6 +26,7 @@ class Customer_Services():
         self.get_url = config.get("GET_URL").data 
         self.book_url = config.get("BOOK_URL").data 
         self.email_url = config.get("EMAIL_URL").data
+        self.updt_url = config.get("UPDT_URL").data
         self._location_data_json()
     
     def _location_data_json(self):
@@ -48,8 +49,8 @@ class Customer_Services():
             for customer_row in customer_fh:
                 customer_row = customer_row.rstrip()
                 if customer_row:
-                    (customer_first_name, customer_last_name,customer_type,customer_email,trip_indicator) = customer_row.split(',')                            
-                customer_data = {"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"customer_email":customer_email,"customer_type":customer_type,"trip_indicator":trip_indicator}
+                    (customer_first_name, customer_last_name,customer_type,customer_email,trip_indicator,mobile_number) = customer_row.split(',')                            
+                customer_data = {"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"customer_email":customer_email,"customer_type":customer_type,"trip_indicator":trip_indicator,"mobile_number":mobile_number}
                 customer_data_list.append(customer_data)
             return customer_data_list
             
@@ -69,23 +70,24 @@ class Customer_Services():
         return -1
         
     # register one customer
-    def register_one(self,customer_first_name,customer_last_name,customer_email,customer_type,lat,long):
+    def register_one(self,customer_first_name,customer_last_name,customer_email,customer_type,lat,long,mobile_number):
         try:
             self._latest_error = '' 
             # check location cordinates
             loc_res = self.check_location(lat,long)
             if loc_res != -1:
-                # read customer customer details           
-                res = self.get_customer_details(customer_first_name,customer_last_name)
+                # read customer customer details
+                res = self.get_customer_details(mobile_number)
                 cust_res = json.loads(res)
+                # print(cust_res)
                 if cust_res == -1:                          
                     customer_id = self.generate_customer_id(customer_first_name,customer_last_name)
                     _timestamp=datetime.datetime.now()
-                    customer_data = {"timestamp":str(_timestamp),"customer_id":customer_id,"customer_type":customer_type,"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"customer_email":customer_email,"trip_indicator":"OFF","location":{"type":"Point","coordinates":[long,lat]}}        
+                    customer_data = {"timestamp":str(_timestamp),"customer_id":customer_id,"customer_type":customer_type,"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"customer_email":customer_email,"trip_indicator":"OFF","mobile_number":mobile_number,"location":{"type":"Point","coordinates":[long,lat]}}        
                     reg_res = self.register_connection([customer_data]) 
                     if reg_res["res"] != -1:
-                        self.send_email(reg_res)  
-                        print("==================Successful Registration!==================")            
+                        # self.send_email(reg_res)  
+                        print(f"==================Registration Successful for customer: {customer_first_name} {customer_last_name}==================")            
                 else:
                     print("============Customer already registered!! ====================")
             else:
@@ -124,10 +126,33 @@ class Customer_Services():
             print("Check status!")
             return {"res":-1}
 
+    # update customer details
+    def updt_customer_data(self,new_customer_email,new_customer_type,current_mobile_number,new_mobile_number):
+        # read customer customer details
+        res = self.get_customer_details(current_mobile_number)
+        cust_res = json.loads(res)
+        # print(cust_res)
+        if cust_res != -1:          
+            cust_data = {"new_customer_email":new_customer_email,"new_customer_type":new_customer_type,"current_mobile_number":current_mobile_number,"new_mobile_number":new_mobile_number}
+            customer_data = json.dumps(cust_data)
+            # connecting to endpoint to update data
+            res = requests.put(self.updt_url,data=customer_data)
+            print("==================Connected to Update API==================")
+            updt_res = json.loads(res.text)
+            if updt_res == 1:
+                print("==================Data Updated Successfully! ==================")
+                return updt_res
+            else:
+                print("Check status!")
+                return -1
+        else:
+            print("===========Customer is not registered! ============")
+
+
     # connect to API gateway to read customer details
-    def get_customer_details(self,customer_first_name,customer_last_name):
+    def get_customer_details(self,mobile_number):
         try:
-            data_req = {"req":"one","customer_first_name":customer_first_name,"customer_last_name":customer_last_name}
+            data_req = {"req":"one","mobile_number": mobile_number}
             # connecting to endpoint to send data
             response = requests.get(self.get_url,params = data_req)            
             return response.text
@@ -145,14 +170,14 @@ class Customer_Services():
             return -1
 
     # Booking and proximity search : raise booking request and return nearest taxi via API
-    def booking(self,customer_first_name,customer_last_name,source_lat,source_long,dest_lat,dest_long,taxi_type):
+    def booking(self,customer_first_name,customer_last_name,source_lat,source_long,dest_lat,dest_long,taxi_type,mobile_number):
         # check if source/destination location is in service area boundary
         source_res= self.check_location(source_lat,source_long)
         dest_res = self.check_location(dest_lat,dest_long)
         if source_res != -1 and dest_res != -1:
             try:
                 # read customer customer details           
-                res = self.get_customer_details(customer_first_name,customer_last_name)
+                res = self.get_customer_details(mobile_number)
             except Exception as e:
                 print(str(e))         
             read_res = json.loads(res)
@@ -173,7 +198,7 @@ class Customer_Services():
                     book_res = json.loads(response.text)
                     customer_name = customer_first_name + " " + customer_last_name
                     # print(book_res)
-                    self.send_email(book_res)
+                    # self.send_email(book_res)
                     if book_res["res"] != -1 :
                         print("=========Connected to Booking API Endpoint==========")
                         print(f"=========Booking Successful for customer : {customer_name}!!===========")                    
@@ -201,12 +226,13 @@ class Customer_Services():
         # connecting to endpoint to send email
         res = requests.post(self.email_url,data=customer_data)
         email_res = json.loads(res.text)
+        # print(email_res)
         if email_res == 1:
             print("=========Email sent to customer!===========")
         elif email_res == 0:
             print("=========Email needs to be verified by customer! ==========")
-        else:
-            print("=========Check status! Mostly email id not valid! =========")
+        else:            
+            print("=========Check email status! Mostly Throttling error or email id not valid! =========")
 
     # customer trip method 
     def customer_trip(self,booking_details):
