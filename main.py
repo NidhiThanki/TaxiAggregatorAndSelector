@@ -62,7 +62,6 @@ def main():
         customer_details = json.loads(customer_details)
         ''' Async Booking Simulation for all registered customers'''
         if len(customer_details) > 0:
-            print(len(customer_details))
             pool_size=len(customer_details)
             if pool_size > 10:
                 pool_size=50
