@@ -33,7 +33,7 @@ src folder
 		- get_customer_details : returns all registered customer details.
 		- get_registered_customers : returns customer details based on customer's mobile number
 		- booking : 
-			- customer type: provide two user types : General, Premium
+			- makes booking based on user types : General, Premium
 			- if user type is General: 
 				- booking not allowed if such customer is already in trip i.e. if customer's trip indicator is ON.
 				- booking not allowed for third-party or outside customers.
@@ -53,6 +53,9 @@ src folder
 			- check if taxi is available within 10km with customer's taxi type preference.
 			- if customer request is not fullfilled then booking fails.
 			- if booking fails due to taxitype prefernce or 10 km range limit then provides customer with best option/suggestion for nearest taxi.
+			- if booking is successful:
+				- sets trip indicator from "OFF" for taxi and customer to "ON" in their respective mongodb collection.
+				- for outside/unregistered customer booking is created using premium member custoemr id and email while customer type is set to "other" in booking collections.
 	- read-customer : script used for handling request received at read-customer endpoint.
 		- connects with mongodb atlas.
 		- returns customer data based on request type "all" or "one"
