@@ -4,7 +4,6 @@
 # Imports ObjectId to convert to the correct format before querying in the db
 from asyncore import read
 import email
-from bson.objectid import ObjectId
 from random import randint
 import random,json
 import datetime
@@ -86,7 +85,7 @@ class Customer_Services():
                     customer_data = {"timestamp":str(_timestamp),"customer_id":customer_id,"customer_type":customer_type,"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"customer_email":customer_email,"trip_indicator":"OFF","mobile_number":mobile_number,"location":{"type":"Point","coordinates":[long,lat]}}        
                     reg_res = self.register_connection([customer_data]) 
                     if reg_res["res"] != -1:
-                        # self.send_email(reg_res)  
+                        self.send_email(reg_res) 
                         print(f"==================Registration Successful for customer: {customer_first_name} {customer_last_name}==================")            
                 else:
                     print("============Customer already registered!! ====================")
@@ -170,7 +169,7 @@ class Customer_Services():
             return -1
 
     # Booking and proximity search : raise booking request and return nearest taxi via API
-    def booking(self,customer_first_name,customer_last_name,source_lat,source_long,dest_lat,dest_long,taxi_type,mobile_number):
+    def booking(self,customer_first_name,customer_last_name,source_lat,source_long,dest_lat,dest_long,taxi_type,mobile_number,book_type):
         # check if source/destination location is in service area boundary
         source_res= self.check_location(source_lat,source_long)
         dest_res = self.check_location(dest_lat,dest_long)
@@ -184,38 +183,48 @@ class Customer_Services():
             if read_res != -1:
                 # check if customer is "General" and  already in trip
                 cust_trip_ind = read_res["trip_indicator"]
-                cust_type = read_res["customer_type"]
-                if cust_trip_ind == "ON" and cust_type == "General":
-                    print("=======Customer not premium member, not allowed to book taxi while in trip! =========")
-                else:
-                    # connecting to endpoint to send data
-                    cust_id = read_res["customer_id"]
-                    cust_email = read_res["customer_email"]
-                    _timestamp=datetime.datetime.now()
-                    customer_type = read_res["customer_type"]
-                    cust_data = {"timestamp":str(_timestamp),"customer_id": cust_id,"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"email_id":cust_email,"customer_type":customer_type,"source_lat":source_lat,"source_long":source_long,"type":"Point","taxi_type":taxi_type,"dest_lat":dest_lat,"dest_long":dest_long}
+                cust_type = read_res["customer_type"] 
+                # connecting to endpoint to send data
+                cust_id = read_res["customer_id"]
+                cust_email = read_res["customer_email"]
+                _timestamp=datetime.datetime.now()
+                customer_type = read_res["customer_type"]
+                cust_data = {"timestamp":str(_timestamp),"customer_id": cust_id,"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"email_id":cust_email,"customer_type":customer_type,"source_lat":source_lat,"source_long":source_long,"type":"Point","taxi_type":taxi_type,"dest_lat":dest_lat,"dest_long":dest_long,"book_type":book_type}           
+                if book_type.lower() == "self":                    
                     response = requests.get(self.book_url,params = cust_data)
-                    book_res = json.loads(response.text)
-                    customer_name = customer_first_name + " " + customer_last_name
-                    # print(book_res)
-                    # self.send_email(book_res)
-                    if book_res["res"] != -1 :
-                        print("=========Connected to Booking API Endpoint==========")
-                        print(f"=========Booking Successful for customer : {customer_name}!!===========")                    
-                        book_res.pop("msg")
-                        book_res.pop("email_id")
-                        book_res.pop("res")
-                        self.customer_trip(book_res)
-                        # return book_res
-                    elif book_res["res"] == -1:
-                        print(book_res)
-                        print(f"=========Check status in booking table for customer: {customer_name}===========")
-                        return -1
-                    elif book_res["res"] == 0:
-                        print("===========Customer not allowed for booking services! ============")
+                else:
+                    # premium members can book taxi for other customers
+                    if cust_type.lower() == "premium":
+                        cust_data = {"timestamp":str(_timestamp),"customer_id": cust_id,"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"email_id":cust_email,"customer_type":"Other","source_lat":source_lat,"source_long":source_long,"type":"Point","taxi_type":taxi_type,"dest_lat":dest_lat,"dest_long":dest_long,"book_type":book_type}
+                        '''============Booking taxi for unregistered/third party customer============'''
+                        response = requests.get(self.book_url,params = cust_data)
                     else:
-                        print("===Faiulre!!===")
+                        if cust_trip_ind == "ON":
+                            print("Sorry,General type customer not allowed to book taxi while already in trip!!")
+                        else:
+                            print("Sorry,General type custoemr not allowed to book taxi for unregistered/third party customers!!")
                         return -1
+                book_res = json.loads(response.text)
+                customer_name = customer_first_name + " " + customer_last_name
+                self.send_email(book_res)
+                # print(book_res)
+                if book_res["res"] != -1 :
+                    print("=========Connected to Booking API Endpoint==========")
+                    print(f"=========Booking Successful for customer : {customer_name}!!===========")                    
+                    book_res.pop("msg")
+                    book_res.pop("email_id")
+                    book_res.pop("res")
+                    self.customer_trip(book_res)
+                    return book_res
+                elif book_res["res"] == -1:
+                    # print(book_res)
+                    print(f"=========Check status in booking table for customer: {customer_name}===========")
+                    return -1
+                elif book_res["res"] == 0:
+                    print("===========Customer not allowed for booking services! ============")
+                else:
+                    print("===Faiulre!!===")
+                    return -1
             else:
                 print("===========Customer not registered for services! ============")
                 return 0
@@ -231,7 +240,7 @@ class Customer_Services():
         email_res = json.loads(res.text)
         # print(email_res)
         if email_res == 1:
-            print("=========Email sent to customer!===========")
+            print("=================Email sent to customer!================")
         elif email_res == 0:
             print("=========Email needs to be verified by customer! ==========")
         else:            

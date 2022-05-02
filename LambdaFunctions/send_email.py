@@ -1,6 +1,7 @@
 import json
 import boto3
 import base64
+import pprint
 
 def lambda_handler(event, context):
     try:
@@ -46,4 +47,5 @@ def lambda_handler(event, context):
         )
         return res
     except Exception as e:
+        pprint.pprint(str(e))
         return -1

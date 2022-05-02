@@ -5,7 +5,8 @@
 main.py
 - is a driver file.
 - have code to create customer and taxi objects.
-- can be used to read default customer or taxis from csv file.
+- can be used to read registered customer or taxis.
+- can be used to update registered customer data.
 - used for creating taxi booking for registered customers asynchronously.
 
 src folder
@@ -14,9 +15,54 @@ src folder
 		- taxi csv file
 		- area boundary json structure
 - Custoemr folder : contains customer script
-			- used for creating customer object from customer service class.
-			- used to access customer data using different methods defined.
+			- Customer_Service class: used for creating customer object and access customer data using different methods defined.
+			- Methods:
+				- _location_data_json : sets service area boundary for start and end latitude and longitudes.
+				- read_data_from_csv : reads customer data from csv.
+				- generate_customer_id : creates unique customer id while registration of each customer.
+				- check_location : checks if customer's location is within servie area boundary.
+				- register_one : 
+					- get required data for custoemr registration.
+					- offers customer duplication check based on mobile number(unique)
+				- register_many : creates required customer data list from csv
+				- register_connection : connects to registration API endpoint.
+				- updt_customer_data : 
+					- update customer details.
+					- offers modification in customer email,type and mobile number.
+				- get_customer_details : returns all registered customer details.
+				- get_registered_customers : returns customer details based on custoemr's mobile number
+				- booking : 
+					- customer type: provide two user types : General, Premium
+					- if user type is General: 
+						- booking not allowed if such customer is already in trip i.e. if customer's trip indicator is ON.
+						- booking not allowed for third-party or outside customers.
+					-if user type is Premiun: 
+						- booking allowed if such customer is already in trip i.e. if customer's trip indicator is ON.
+						- booking allowed for third-party or outside customers.
+				- send_email : sends email to customer with comments and suggestions.
+				- customer_trip : invokes trip method for taxi.
 - Taxi folder : contains taxi script
 			- used for creating taxi object from taxiclass
 			- used to access taxi data using different methods defined.
+- LambdaFunctions : contains lambda function scripts
+					- customer-book-lambda : script used for handling request received at customer-book endpoint.
+								- connects with mongodb atlas.
+								- creates booking based on customer request.
+								- provides taxi for customer:
+									- check if taxi is available within 10km with customer's taxi type preference.
+									- if customer request is not fullfilled then booking fails.
+									- if booking fails due to taxitype prefernce or 10 km range limit then provides customer with best option/suggestion for nearest taxi.
+					- read-customer : script used for handling request received at read-customer endpoint.
+								- connects with mongodb atlas.
+								- returns customer data based on request type "all" or "one"
+									- if request type is all : returns data for all registered customers.
+									- if request type is one : returns data for required registered customer. 
+					- register-customer : script used for handling request received at register-customer endpoint.
+								- connects with mongodb atlas.
+								- register customer data based on request type "all" or "one"
+									- if request type is all : registers list of customers.
+									- if request type is one : registers one customer.
+					- update_customer_data : script used for handling request received at update-customer endpoint.
+								- connects with mongodb atlas.
+								- update customer details like mobile number,email,customer type.
 - Util folder : contains code to read and handle config files.

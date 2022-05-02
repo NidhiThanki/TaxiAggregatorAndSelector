@@ -28,6 +28,7 @@ def lambda_handler(event, context):
         _timestamp = cust_data['timestamp']
         customer_id = cust_data['customer_id']
         customer_type = cust_data["customer_type"]
+        book_type =cust_data["book_type"]
         taxi_type = cust_data['taxi_type']
         email_id = cust_data["email_id"]
         customer_name = cust_data["customer_first_name"] + " " + cust_data["customer_last_name"]
@@ -139,7 +140,7 @@ def lambda_handler(event, context):
                                    "taxi_id": taxi_id, "cust_source_loc": cust_source_loc,
                                    "cust_dest_loc": cust_dest_loc, "distance_km": dist_dict["distance_km"],
                                    "booking_status": booking_status, "trip_indicator": "In-progress",
-                                   "comment": comment, "booking_id": booking_id}
+                                   "comment": comment, "booking_id": booking_id,"book_type":book_type}
                     # copying booked details and removing/adding required fields for trip start
                     booking_details = booking_req.copy()
                     [booking_details.pop(key) for key in ["timestamp", "taxi_id", "booking_status", "comment"]]
@@ -149,7 +150,7 @@ def lambda_handler(event, context):
                 else:
                     booking_req = {"timestamp": _timestamp, "customer_id": customer_id, "customer_type": customer_type,
                                    "taxi_id": "None", "cust_source_loc": cust_source_loc, " cust_dest_loc": cust_dest_loc,
-                                   "booking_status": booking_status, "trip_indictor": "OFF", "comment": comment,"booking_id": booking_id}
+                                   "booking_status": booking_status, "trip_indictor": "OFF", "comment": comment,"booking_id": booking_id,"book_type":book_type}
                     if book_data != None:
                         booking_details = booking_req.copy()
                         [booking_details.pop(key) for key in ["timestamp", "taxi_id", "booking_status", "comment"]]
