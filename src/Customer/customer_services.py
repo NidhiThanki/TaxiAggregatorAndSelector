@@ -3,7 +3,6 @@
 
 # Imports ObjectId to convert to the correct format before querying in the db
 from asyncore import read
-import email
 from random import randint
 import random,json
 import datetime
@@ -16,7 +15,6 @@ class Customer_Services():
     customer_data_list = []
 
     def __init__(self):
-        self._latest_error = ''
         config = CommonUtil.read_properties()
         self._customer_file_path = config.get("CUSTOMER_CSV_FILE").data
         self._collection_name = config.get("CUSTOMER_COLLECTION").data
@@ -35,11 +33,6 @@ class Customer_Services():
         self._max_lat = float(json_data[0]["area_0"]["MAX_LAT_VALUE"])
         self._min_long = float(json_data[0]["area_0"]["MIN_LONG_VALUE"])
         self._max_long = float(json_data[0]["area_0"]["MAX_LONG_VALUE"])
-    
-    # Latest error is used to store the error string in case an issue. It's reset at the beginning of a new function call
-    @property
-    def latest_error(self):
-        return self._latest_error
 
     # Reads customer.csv one line at a time, splits them into the data fields and inserts
     def read_data_from_csv(self):
@@ -71,7 +64,6 @@ class Customer_Services():
     # register one customer
     def register_one(self,customer_first_name,customer_last_name,customer_email,customer_type,lat,long,mobile_number):
         try:
-            self._latest_error = '' 
             # check location cordinates
             loc_res = self.check_location(lat,long)
             if loc_res != -1:
@@ -189,6 +181,8 @@ class Customer_Services():
                 cust_email = read_res["customer_email"]
                 _timestamp=datetime.datetime.now()
                 customer_type = read_res["customer_type"]
+                # registered customer who is booking trip either for "self" or "other" customer
+                booking_customer_name = read_res["customer_first_name"] + " " + read_res["customer_last_name"]
                 cust_data = {"timestamp":str(_timestamp),"customer_id": cust_id,"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"email_id":cust_email,"customer_type":customer_type,"source_lat":source_lat,"source_long":source_long,"type":"Point","taxi_type":taxi_type,"dest_lat":dest_lat,"dest_long":dest_long,"book_type":book_type}           
                 if book_type.lower() == "self":                    
                     response = requests.get(self.book_url,params = cust_data)
@@ -200,9 +194,9 @@ class Customer_Services():
                         response = requests.get(self.book_url,params = cust_data)
                     else:
                         if cust_trip_ind == "ON":
-                            print("Sorry,General type customer not allowed to book taxi while already in trip!!")
+                            print(f"Customer: {booking_customer_name} is general type user.Sorry,not allowed to book taxi while already in trip!!")
                         else:
-                            print("Sorry,General type custoemr not allowed to book taxi for unregistered/third party customers!!")
+                            print(f"Customer: {booking_customer_name} is general type user.Sorry,not allowed to book taxi for unregistered/third party customers!!")
                         return -1
                 book_res = json.loads(response.text)
                 customer_name = customer_first_name + " " + customer_last_name
