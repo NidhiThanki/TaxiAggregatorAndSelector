@@ -77,7 +77,7 @@ class Customer_Services():
                     customer_data = {"timestamp":str(_timestamp),"customer_id":customer_id,"customer_type":customer_type,"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"customer_email":customer_email,"trip_indicator":"OFF","mobile_number":mobile_number,"location":{"type":"Point","coordinates":[long,lat]}}        
                     reg_res = self.register_connection([customer_data]) 
                     if reg_res["res"] != -1:
-                        self.send_email(reg_res) 
+                        self.send_email_to_customer(reg_res)
                         print(f"==================Registration Successful for customer: {customer_first_name} {customer_last_name}==================")            
                 else:
                     print("============Customer already registered!! ====================")
@@ -200,15 +200,17 @@ class Customer_Services():
                         return -1
                 book_res = json.loads(response.text)
                 customer_name = customer_first_name + " " + customer_last_name
-                self.send_email(book_res)
+                self.send_email_to_customer(book_res)
                 # print(book_res)
                 if book_res["res"] != -1 :
                     print("=========Connected to Booking API Endpoint==========")
-                    print(f"=========Booking Successful for customer : {customer_name}!!===========")                    
+                    print(f"=========Booking Successful for customer : {customer_name}!!===========")
+                    self.send_email_to_driver(book_res)
                     book_res.pop("msg")
                     book_res.pop("email_id")
                     book_res.pop("res")
                     self.customer_trip(book_res)
+
                     return book_res
                 elif book_res["res"] == -1:
                     # print(book_res)
@@ -226,6 +228,37 @@ class Customer_Services():
             print("==========Sorry,cab service is not available in source/destination area!=========") 
 
 
+    def send_email_to_driver(self, booking_data):
+        email_data = {}
+        email_data["email_id"] = booking_data["driver_email_id"]
+        email_data["status"] = "Taxi booked with booking id " + booking_data["booking_id"]
+        msg = "Your taxi has been booked by " + booking_data["customer_name"]
+        distance = " Total distance : " + str(booking_data["distance_km"])
+        source_location = " Source location is :" + str(booking_data["cust_source_loc"]["coordinates"])
+        final_msg = msg + distance + source_location
+        email_data["msg"] = final_msg
+
+        res = self.send_email(email_data)
+
+        if res == 1:
+            print("=================Email sent to driver!================")
+        elif res == 0:
+            print("=========Email needs to be verified by driver! ==========")
+        else:
+            print("=========Check email status! Mostly Throttling error or email id not valid! =========")
+
+    def send_email_to_customer(self,cust_data):
+
+        res = self.send_email(cust_data)
+
+        if res == 1:
+            print("=================Email sent to customer!================")
+        elif res == 0:
+            print("=========Email needs to be verified by customer! ==========")
+        else:
+            print("=========Check email status! Mostly Throttling error or email id not valid! =========")
+
+
     def send_email(self,cust_data):
         #creaating json data
         customer_data = json.dumps(cust_data)
@@ -233,12 +266,8 @@ class Customer_Services():
         res = requests.post(self.email_url,data=customer_data)
         email_res = json.loads(res.text)
         # print(email_res)
-        if email_res == 1:
-            print("=================Email sent to customer!================")
-        elif email_res == 0:
-            print("=========Email needs to be verified by customer! ==========")
-        else:            
-            print("=========Check email status! Mostly Throttling error or email id not valid! =========")
+        return email_res
+
 
     # customer trip method 
     def customer_trip(self,booking_details):

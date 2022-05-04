@@ -93,6 +93,7 @@ def lambda_handler(event, context):
                 booking_status = "Successful"
                 comment = "Success"
                 taxi_id = nearest_taxi_details['taxi_id']
+
             else:
                 booking_status = "Failure"
                 taxi_id = "None"
@@ -105,6 +106,7 @@ def lambda_handler(event, context):
                     taxi_id = nearest_taxi_details['taxi_id']
                     end = geopy.Point(doc['location']['coordinates'][1], doc['location']['coordinates'][0])
                     dist_dict = {"distance_km": geodesic(start, end).km}
+
                     print(doc)
                 else:
                     comment = "No taxis available within 10km range from customer.Sending other taxi options to customer!"
@@ -140,7 +142,7 @@ def lambda_handler(event, context):
                                    "taxi_id": taxi_id, "cust_source_loc": cust_source_loc,
                                    "cust_dest_loc": cust_dest_loc, "distance_km": dist_dict["distance_km"],
                                    "booking_status": booking_status, "trip_indicator": "In-progress",
-                                   "comment": comment, "booking_id": booking_id,"book_type":book_type}
+                                   "comment": comment, "booking_id": booking_id,"book_type":book_type, "customer_name": customer_name}
                     # copying booked details and removing/adding required fields for trip start
                     booking_details = booking_req.copy()
                     [booking_details.pop(key) for key in ["timestamp", "taxi_id", "booking_status", "comment"]]
@@ -171,6 +173,7 @@ def lambda_handler(event, context):
                     booking_details = {**dict_msg, **booking_details}
                 else:
                     booking_details = dict_msg
+            print("Booking details : ", booking_details)
             return booking_details
         return {"res":res}
     except Exception as e:

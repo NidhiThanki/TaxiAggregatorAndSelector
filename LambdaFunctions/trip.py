@@ -1,11 +1,8 @@
 import base64
 import json
-import math
-
 import geopy as geopy
 from geopy.distance import lonlat, geodesic
 import numpy as np
-from time import time, sleep
 import datetime
 from datetime import timedelta
 
