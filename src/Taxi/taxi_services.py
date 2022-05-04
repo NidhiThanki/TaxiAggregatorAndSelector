@@ -48,7 +48,7 @@ class Taxi_Services:
                     (taxi_type, taxi_name) = taxi_row.split(',')
                 taxi_dtls = {'taxi_id': registration_plate_no, 'taxi_type': taxi_type, 'taxi_name': taxi_name,
                              'location': {"type": "Point", "coordinates": [long, lat]},
-                             'trip_indicator': "OFF", 'email_id': random.choice(self.email_id_list)}
+                             'trip_indicator': "OFF", 'driver_email_id': random.choice(self.email_id_list)}
 
                 self.call_register_taxi_api(taxi_dtls)
 
@@ -71,7 +71,7 @@ class Taxi_Services:
             long = random.uniform(self._min_long, self._max_long)
             taxi_dtls = {'taxi_id': registration_plate, 'taxi_type': taxi_type, 'taxi_name': taxi_name,
                          'location': {"type": "Point", "coordinates": [long, lat]},
-                         'trip_indicator': "OFF",'email_id': random.choice(self.email_id_list)}
+                         'trip_indicator': "OFF",'driver_email_id': random.choice(self.email_id_list)}
             self.call_register_taxi_api(taxi_dtls)
         else:
             print(f"Taxi is already registered with this registration plate {registration_plate}.")
