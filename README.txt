@@ -33,7 +33,7 @@ src folder
 		- get_customer_details : returns all registered customer details.
 		- get_registered_customers : returns customer details based on customer's mobile number
 		- booking : 
-			- makes booking based on user types : General(not registered), Premium(registered), General(registered)
+			- makes booking based on user types : General(not registered), Premium(registered), Non-premium(registered)
 			- if user type is General: 
 				- booking not allowed if such customer is already in trip i.e. if customer's trip indicator is ON.
 				- booking not allowed for third-party or outside customers.
