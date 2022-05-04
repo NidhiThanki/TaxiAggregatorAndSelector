@@ -6,7 +6,7 @@ import random,string
 
 
 def main():    
-    print("########################### Taxi Registration Simulation ####################################")
+    print("########################### Taxi Registration Simulation####################################")
     taxi_services = Taxi_Services()
     taxi_type_list_for_registration = ["Basic", "Deluxe", "Luxury"]
     taxi_names = [{"Basic": ["Maruti Alto 800", "Maruti Wagon R"]},
@@ -33,7 +33,7 @@ def main():
     # random data generation for customer registration
     email_id_list = ["aarondouyere25@gmail.com", "mayuri.phanslkr@gmail.com", "nidhi.thanky@gmail.com",
                     "pavantalur@gmail.com"]
-    customer_type_list = ["Premium", "General"]  
+    customer_type_list = ["Premium", "Non-Premium"]  
     pool_size = 5  
     pool = Pool(pool_size)
     try:
@@ -81,8 +81,13 @@ def main():
         cust_book_service = Customer_Services()
         '''get all registered customers details'''    
         customer_details = []
+        premium_cust_mobile_list = []
         customer_details = cust_book_service.get_registered_customers()
         customer_details = json.loads(customer_details)
+        # creating list of premium customers for simulating "other" book_type scenario 
+        for val in customer_details:
+            if val["customer_type"].lower() == "premium":
+                premium_cust_mobile_list.append(val["mobile_number"])
         ''' Async Booking Simulation for all registered customers'''
         if len(customer_details) > 0:
             pool_size=len(customer_details)
@@ -90,16 +95,24 @@ def main():
                 pool_size=50
             pool = Pool(pool_size) 
             taxi_type_list = ["Basic","Deluxe","Luxury","ALL"]
+            
             for customers in customer_details:
                 try:
-                    customer_first_name= customers["customer_first_name"]
-                    customer_last_name= customers["customer_last_name"]
-                    mobile_number = customers["mobile_number"]
                     # random taxi type selection                    
                     random.shuffle(taxi_type_list)
                     taxi_type = taxi_type_list[0]
                     book_type_list = ["self","other"]
                     book_type = random.choice(book_type_list)
+                    # booking for non-registered customers i.e. "other customers" using premium customer aggregator's mobile number
+                    if book_type == "other":
+                        mobile_number = random.choice(premium_cust_mobile_list)
+                        customer_first_name = random.choice(string.ascii_uppercase) + "".join(random.choice(string.ascii_lowercase) for i in range(5))
+                        customer_last_name = random.choice(string.ascii_uppercase) + "".join(random.choice(string.ascii_lowercase) for i in range(5))
+                    # booking for registered customers i.e. "non-premium and premium" custoemrs for bokking type as "self"
+                    else:
+                        mobile_number = customers["mobile_number"]
+                        customer_first_name= customers["customer_first_name"]
+                        customer_last_name= customers["customer_last_name"]
                     # random lat long generation from area boundary 
                     source_lat = random.uniform(12.5000001,12.972442 )
                     source_long = random.uniform(77.1000001, 77.580643)
