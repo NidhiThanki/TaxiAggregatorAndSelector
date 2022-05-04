@@ -77,7 +77,7 @@ class Customer_Services():
                     customer_data = {"timestamp":str(_timestamp),"customer_id":customer_id,"customer_type":customer_type,"customer_first_name": customer_first_name,"customer_last_name": customer_last_name,"customer_email":customer_email,"trip_indicator":"OFF","mobile_number":mobile_number,"location":{"type":"Point","coordinates":[long,lat]}}        
                     reg_res = self.register_connection([customer_data]) 
                     if reg_res["res"] != -1:
-                        # self.send_email_to_customer(reg_res)
+                        self.send_email_to_customer(reg_res)
                         print(f"==================Registration Successful for customer: {customer_first_name} {customer_last_name}==================")            
                 else:
                     print("============Customer already registered!! ====================")
@@ -200,12 +200,12 @@ class Customer_Services():
                         return -1
                 book_res = json.loads(response.text)
                 customer_name = customer_first_name + " " + customer_last_name
-                # self.send_email_to_customer(book_res)
+                self.send_email_to_customer(book_res)
                 # print(book_res)
                 if book_res["res"] != -1 :
                     print("=========Connected to Booking API Endpoint==========")
                     print(f"=========Booking Successful for customer : {customer_name}!!===========")
-                    # self.send_email_to_driver(book_res)
+                    self.send_email_to_driver(book_res)
                     book_res.pop("msg")
                     book_res.pop("email_id")
                     book_res.pop("res")
@@ -237,23 +237,23 @@ class Customer_Services():
         source_location = " Source location is :" + str(booking_data["cust_source_loc"]["coordinates"])
         final_msg = msg + distance + source_location
         email_data["msg"] = final_msg
-        # res = self.send_email(email_data)
-        # if res == 1:
-        #     print("=================Email sent to driver!================")
-        # elif res == 0:
-        #     print("=========Email needs to be verified by driver! ==========")
-        # else:
-        #     print("=========Check email status! Mostly Throttling error or email id not valid! =========")
+        res = self.send_email(email_data)
+        if res == 1:
+            print("=================Email sent to driver!================")
+        elif res == 0:
+            print("=========Email needs to be verified by driver! ==========")
+        else:
+            print("=========Check email status! Mostly Throttling error or email id not valid! =========")
 
-    # # notification to customer
-    # def send_email_to_customer(self,cust_data):
-        # res = self.send_email(cust_data)
-        # if res == 1:
-        #     print("=================Email sent to customer!================")
-        # elif res == 0:
-        #     print("=========Email needs to be verified by customer! ==========")
-        # else:
-        #     print("=========Check email status! Mostly Throttling error or email id not valid! =========")
+    # notification to customer
+    def send_email_to_customer(self,cust_data):
+        res = self.send_email(cust_data)
+        if res == 1:
+            print("=================Email sent to customer!================")
+        elif res == 0:
+            print("=========Email needs to be verified by customer! ==========")
+        else:
+            print("=========Check email status! Mostly Throttling error or email id not valid! =========")
 
 
     def send_email(self,cust_data):
