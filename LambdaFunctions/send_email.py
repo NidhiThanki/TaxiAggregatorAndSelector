@@ -16,13 +16,13 @@ def lambda_handler(event, context):
         print(msg)
         ses_client = boto3.client("ses", region_name="us-east-1") 
         email_list = ses_client.list_identities(IdentityType = 'EmailAddress',MaxItems=10)
-        print(email_list['Identities'])
+        # print(email_list['Identities'])
         if email_id not in email_list['Identities']:
             # for email verification
             response = ses_client.verify_email_identity(EmailAddress=email_id)
             res = 0
         else:
-            print(f"Email: {email_id} captured !")
+            print(f"Email: {email_id} already captured !")
             res = 1
         CHARSET = "UTF-8"
         response = ses_client.send_email(

@@ -75,7 +75,7 @@ def main():
     print(read_res)
 
 
-    print("########################### Book Trip for Registered Customers Asynchronously ###################")
+    print("########################### Book Trip for Customers Asynchronously ###################")
     try:
         # Customer Service Object
         cust_book_service = Customer_Services()
@@ -93,9 +93,8 @@ def main():
             pool_size=len(customer_details)
             if pool_size > 10:
                 pool_size=50
-            pool = Pool(pool_size) 
-            taxi_type_list = ["Basic","Deluxe","Luxury","ALL"]
-            
+            pool = Pool(pool_size)
+            taxi_type_list = ["Basic","Deluxe","Luxury","ALL"]            
             for customers in customer_details:
                 try:
                     # random taxi type selection                    
@@ -103,13 +102,13 @@ def main():
                     taxi_type = taxi_type_list[0]
                     book_type_list = ["self","other"]
                     book_type = random.choice(book_type_list)
-                    # booking for non-registered customers i.e. "other customers" using premium customer aggregator's mobile number
+                    '''booking for non-registered customers i.e. "other customers" using premium customer aggregator's mobile number'''
                     if book_type == "other":
                         mobile_number = random.choice(premium_cust_mobile_list)
                         customer_first_name = random.choice(string.ascii_uppercase) + "".join(random.choice(string.ascii_lowercase) for i in range(5))
                         customer_last_name = random.choice(string.ascii_uppercase) + "".join(random.choice(string.ascii_lowercase) for i in range(5))
-                    # booking for registered customers i.e. "non-premium and premium" custoemrs for bokking type as "self"
                     else:
+                        ''' booking for registered customers i.e. non-premium and premium custoemrs for bokking type as self '''
                         mobile_number = customers["mobile_number"]
                         customer_first_name= customers["customer_first_name"]
                         customer_last_name= customers["customer_last_name"]

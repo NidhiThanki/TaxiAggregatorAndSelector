@@ -5,6 +5,7 @@ import boto3
 import json
 import base64
 from pymongo import MongoClient
+import pprint
 
 
 def lambda_handler(event, context):
@@ -35,8 +36,10 @@ def lambda_handler(event, context):
             msg = f"Customer: {customer_name} of user type: {customer_type} is successfully registerd with customer id: {customer_id} on date: {timestamp} for receiving cab services "
             res = 1
             dict_msg = {"res": res, "msg": msg, "email_id": email_id, "status":"Registration Status"}
+            aggregator_cli.close()
             return dict_msg
            
     except Exception as e:
-        print(str(e))
+        pprint.pprint(str(e))
+        aggregator_cli.close()
         return {"res":-1}

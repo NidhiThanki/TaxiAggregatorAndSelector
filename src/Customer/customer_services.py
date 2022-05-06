@@ -199,9 +199,19 @@ class Customer_Services():
                             print(f"Customer: {booking_customer_name} is premium type user.Sorry,not allowed to book taxi for unregistered/third party customers!!")
                         return -1
                 book_res = json.loads(response.text)
-                customer_name = customer_first_name + " " + customer_last_name
-                self.send_email_to_customer(book_res)
                 # print(book_res)
+                customer_name = customer_first_name + " " + customer_last_name
+                try:
+                    if book_res["message"] == "Internal Server Error":
+                        print(f"=========Booking Unsuccessful for customer : {customer_name}!!===========")
+                        return -1
+                except:
+                    if book_res["res"] == "exception":
+                        print(f"=========Booking Unsuccessful for customer : {customer_name}!!===========")
+                        return -1                   
+                    else :
+                        self.send_email_to_customer(book_res)
+                   
                 if book_res["res"] != -1 :
                     print("=========Connected to Booking API Endpoint==========")
                     print(f"=========Booking Successful for customer : {customer_name}!!===========")
@@ -210,7 +220,6 @@ class Customer_Services():
                     book_res.pop("email_id")
                     book_res.pop("res")
                     self.customer_trip(book_res)
-
                     return book_res
                 elif book_res["res"] == -1:
                     # print(book_res)

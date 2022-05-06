@@ -8,11 +8,11 @@ from pymongo import MongoClient
 
 def lambda_handler(event, context):
     try:
+        res = -1
         data=event['body']
         byte_data = base64.b64decode(data)
         decode_data=json.loads(str(byte_data, 'utf-8'))    
         print(decode_data)
-        # {'customer_email': 'mayuri.phanslkr@gmail.com', 'customer_type': 'General', 'old_mobile_number': 7436894200, 'new_mobile_number': 9128695537}
         new_cust_email = decode_data["new_customer_email"]
         new_cust_type = decode_data["new_customer_type"]
         current_mobile_number = decode_data["current_mobile_number"]
@@ -44,10 +44,13 @@ def lambda_handler(event, context):
             updt_val = {"$set": {'mobile_number': new_mobile_number}}
         else:
             print("Nothing to update!")
+            aggregator_cli.close()
             return -1
         customers.update_one(filter1, updt_val)
+        aggregator_cli.close()
         return 1
     except Exception as e:
         print("eror")
+        aggregator_cli.close()
         pprint.pprint(str(e))
         return -1

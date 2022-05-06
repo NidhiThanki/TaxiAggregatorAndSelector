@@ -18,7 +18,9 @@ def lambda_handler(event, context):
     res = taxi_collection.insert_one(payload_rec)
 
     print("Result :", res.inserted_id)
-
-    response_obj = {"statusCode": 200, "Registration": "Completed"}
-
+    
+    response_obj = {"statusCode":200, "Registration" : "Completed"}
+    
+    db_conn.close()
+    
     return json.loads(json.dumps(response_obj, default=str))

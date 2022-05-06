@@ -1,8 +1,11 @@
 import base64
 import json
+import math
+
 import geopy as geopy
 from geopy.distance import lonlat, geodesic
 import numpy as np
+from time import time, sleep
 import datetime
 from datetime import timedelta
 
@@ -11,7 +14,7 @@ from pymongo import MongoClient
 
 def lambda_handler(event, context):
     taxi_data = event['body']
-    # taxi_data = event['detail']['fullDocument']
+    #taxi_data = event['detail']['fullDocument']
     payload = base64.b64decode(taxi_data)
     payload = str(payload, 'utf-8')
 
@@ -30,8 +33,16 @@ def lambda_handler(event, context):
                         payload_rec["cust_loc"]["coordinates"][0])
     end = geopy.Point(payload_rec["cust_desti_loc"]["coordinates"][1],
                       payload_rec["cust_desti_loc"]["coordinates"][0])
-    list_of_points = points_between(start, end, 5, False)
-
+                      
+    cal_distance = geodesic(lonlat(*payload_rec["cust_loc"]["coordinates"]),
+                        lonlat(*payload_rec["cust_desti_loc"]["coordinates"])).km
+                        
+    no_of_points = round(cal_distance)
+    
+    print("No of points from distance : ", no_of_points)
+                
+    list_of_points = points_between(start, end, no_of_points, False)
+    
     time_inc = 0
     for idx in range(0, len(list_of_points[1])):
         current_time = datetime.datetime.now()
@@ -42,11 +53,13 @@ def lambda_handler(event, context):
             "timestamp": str(time_for_simulation),
             "location": {"type": "Point",
                          "coordinates": [list_of_points[2][idx], list_of_points[1][idx]]},
-            "customer_id": payload_rec["customer_id"]
+            "customer_id" : payload_rec["customer_id"]
         }
         res = location_collection.insert_one(location_update_data)
         time_inc += 1
         print("Result after insert_one :", res.inserted_id)
+        
+        
 
     # update trip_indicator in  customer_collection
     key_of_customer = {"customer_id": payload_rec["customer_id"]}
@@ -57,20 +70,19 @@ def lambda_handler(event, context):
     # update trip_indicator and location of taxi in Register_taxi collection
     dest_long = payload_rec["cust_desti_loc"]["coordinates"][0]
     dest_lat = payload_rec["cust_desti_loc"]["coordinates"][1]
-    key_of_taxi = {"taxi_id": payload_rec["taxi_id"]}
-    latest_taxi_data = {
-        "$set": {"trip_indicator": "OFF", "location": {"type": "Point", "coordinates": [dest_long, dest_lat]}}}
+    key_of_taxi = {"taxi_id" : payload_rec["taxi_id"]}
+    latest_taxi_data = {"$set" : {"trip_indicator": "OFF", "location" : {"type": "Point", "coordinates": [dest_long, dest_lat]}}}
     res = taxi_collection.update_one(key_of_taxi, latest_taxi_data)
     print("Result after taxi's update_one :", res.matched_count)
-
-    # update trip_indicator in booking collection
+    
+     # update trip_indicator in booking collection
     key_booking = {"booking_id":payload_rec["booking_id"]}
     updated_fields = {"$set": {"trip_indicator": "Complete"}}
     res = booking_collection.update_one(key_booking,updated_fields)
     print("Result after updating booking fields : ", res.matched_count)
-
-    response_obj = {"statusCode": 200, "Simmulation": "Completed for taxi " + payload_rec["taxi_id"]}
-
+        
+    response_obj = {"statusCode" : 200, "Simmulation" : "Completed for taxi "+payload_rec["taxi_id"]}
+        
     return response_obj
 
 

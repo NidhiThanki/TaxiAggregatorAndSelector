@@ -29,8 +29,11 @@ def lambda_handler(event,context):
             locationUpdateRecord.pop('_id')
             taxi_loc_updates.append(locationUpdateRecord)
         if len(taxi_loc_updates) > 0:
+            aggregator_cli.close()
             return taxi_loc_updates
+        aggregator_cli.close()
         return 1
     except Exception as e:
         pprint.pprint(str(e))
+        aggregator_cli.close()
         return -1

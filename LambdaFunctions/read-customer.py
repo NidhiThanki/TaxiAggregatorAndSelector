@@ -36,7 +36,12 @@ def lambda_handler(event,context):
                 return customer_data                
             except Exception as e:
                 pprint.pprint(str(e))
+                aggregator_cli.close()
                 return -1
+        aggregator_cli.close()
     except Exception as e:
         pprint.pprint(str(e))
+        aggregator_cli.close()
         return -1
+
+        
