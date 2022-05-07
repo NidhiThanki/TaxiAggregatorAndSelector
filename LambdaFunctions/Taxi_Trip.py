@@ -82,6 +82,7 @@ def lambda_handler(event, context):
     print("Result after updating booking fields : ", res.matched_count)
         
     response_obj = {"statusCode" : 200, "Simmulation" : "Completed for taxi "+payload_rec["taxi_id"]}
+    db_conn.close()
         
     return response_obj
 
