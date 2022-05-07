@@ -132,6 +132,14 @@ class Customer_Services():
             updt_res = json.loads(res.text)
             if updt_res == 1:
                 print("==================Data Updated Successfully! ==================")
+                if new_customer_email != None:
+                    email_id = new_customer_email
+                else:
+                    email_id = cust_data["email_id"]
+                status ="Update Status"
+                msg = "Customer data is sucessfully updated!"
+                updt_data = {"res" : 1, "email_id":email_id,"status":status,"msg":msg}
+                self.send_email_to_customer(updt_data)
                 return updt_res
             else:
                 print("Check status!")
