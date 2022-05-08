@@ -57,18 +57,6 @@ def main():
 
     print("########################### Update Customer Data ###################################")
     cust_updt_service = Customer_Services()
-    # '''get all registered customers details'''    
-    # customer_details = []
-    # cust_mobile_list = []
-    # email_id_list = ["aarondouyere25@gmail.com", "mayuri.phanslkr@gmail.com", "nidhi.thanky@gmail.com",
-    #                 "pavantalur@gmail.com"]
-    # customer_type_list = ["Premium", "Non-Premium"] 
-    # customer_details = cust_updt_service.get_registered_customers()
-    # customer_details = json.loads(customer_details)
-    # # creating list of premium customers for simulating "other" book_type scenario 
-    # for val in customer_details:
-    #     cust_mobile_list.append(val["mobile_number"])
-    # mobile_number = random.choice(cust_mobile_list)
 
     current_mobile_number = mobile_number
     new_customer_email = random.choice(email_id_list)
@@ -77,8 +65,7 @@ def main():
     range_start = 10**(10-1)*random.randint(6, 9)
     range_end = (10**10)-1
     new_mobile_number=random.randint(range_start, range_end)    
-    # customer_service.updt_customer_data(new_customer_email=None,new_customer_type=new_customer_type,current_mobile_number= current_mobile_number 
-    # ,new_mobile_number=None)
+
     cust_updt_service.updt_customer_data(new_customer_email=new_customer_email,new_customer_type=new_customer_type,current_mobile_number=current_mobile_number
     ,new_mobile_number=new_mobile_number)
 

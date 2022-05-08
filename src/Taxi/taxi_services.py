@@ -10,6 +10,7 @@ from src.Util.CommonUtil import CommonUtil
 class Taxi_Services:
 
     # list of email ids for sending notification
+    # Using this list so that send_email sends email to these address only
     email_id_list = ["aarondouyere25@gmail.com", "mayuri.phanslkr@gmail.com", "nidhi.thanky@gmail.com",
                      "pavantalur@gmail.com"]
 
@@ -94,6 +95,7 @@ class Taxi_Services:
         else:
             print("Trip simulation interrupted  :", resp)
 
+    # This method will call API gateway which triggers lambda function and returns taxi details
     def call_get_taxi_api(self, taxi_id):
         query_string_param = {"taxi_id": taxi_id}
         response = requests.get(self._get_taxi_url, params=query_string_param)

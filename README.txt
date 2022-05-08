@@ -14,6 +14,7 @@ src folder
 	- customer csv file
 	- taxi csv file
 	- area boundary json structure
+	- app-config properties file which contains API Gateway URLs
 - Custoemr folder : contains customer script
 	- Customer_Service class: used for creating customer object and access customer data using different methods defined.
 	- Methods:
@@ -43,9 +44,14 @@ src folder
 		- send_email : sends email to customer with comments and suggestions.
 		- customer_trip : invokes trip method for taxi.
 - Taxi folder : contains taxi script
-	- used for creating taxi object from taxiclass
+	- used for creating taxi object from taxi class
 	- used to access taxi data using different methods defined.
-- LambdaFunctions : contains lambda function scripts
+	- It has taxi_registration, get_taxi details and start_trip methods.
+	- Above mentioned methods access API gateway which triggers Lambda functions and ingest data in database
+- Util folder : contains code to read and handle config files.
+
+
+LambdaFunctions : contains lambda function scripts
 	- customer-book-lambda : script used for handling request received at customer-book endpoint.
 		- connects with mongodb atlas.
 		- creates booking based on customer request.
@@ -60,7 +66,7 @@ src folder
 		- connects with mongodb atlas.
 		- returns customer data based on request type "all" or "one"
 			- if request type is all : returns data for all registered customers.
-			- if request type is one : returns data for required registered customer. 
+			- if request type is one : returns data for required registered customer.
 	- register-customer : script used for handling request received at register-customer endpoint.
 		- connects with mongodb atlas.
 		- register customer data based on request type "all" or "one"
@@ -69,4 +75,20 @@ src folder
 	- update_customer_data : script used for handling request received at update-customer endpoint.
 		- connects with mongodb atlas.
 		- update customer details like mobile number,email,customer type.
-- Util folder : contains code to read and handle config files.
+	- get_location_updates:
+	    - Gets the taxi's location data
+	    - It returns list of location data of taxi within given time range
+	- get_taxi_details:
+	    - Returns details of taxi
+	    - Used to verify taxi details while insertion
+	- register_taxi:
+	    - Registers taxi's details into database
+	-send_email:
+	    - It sends email notification to customer and drivers
+	Taxi_Trip:
+	    - It simulates taxi from source location to destination location.
+	    - Based on total distance it calculates geo_points using numpy, geopy libraries
+	    - It ingest calculated geo points into database with timestamp
+	    - Instead of using sleep() method to put data into database with some delay, it calculates future timestamp and ingest data into database
+	    - Taxi is moving at speed of 1 km per 1 min in simulation code
+	    - Once taxi is reached to destination it ends the trip the updates trip_indicator for customer and taxi and also updates current location of taxi
